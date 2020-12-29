@@ -7,7 +7,7 @@ def make_dirs(path):
 
 args_preproc = Namespace(
     # parameters for sampling
-    SHUFFLE_SAMPLES=TRUE,
+    SHUFFLE_SAMPLES=True,
     
     SEED = 0,)
 
