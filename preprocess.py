@@ -11,8 +11,7 @@ import time
 import librosa
 
 from .utils import make_dirs
-
-SEED = 0
+from .utils import args_proc as args
 
 def dl_commonvoice_data(url, save_path=None, unpack=True):
     r"""
@@ -35,8 +34,8 @@ def dl_commonvoice_data(url, save_path=None, unpack=True):
 
 
 def convert_to_wav(mp3_file, 
-                   src_path='/content/cv-corpus-5.1-2020-06-22/fr/clips/', 
-                   dest_path='/content/fr_wav_20h/',
+                   src_path, 
+                   dest_path='/content/files/',
                    dest_frame_rate=16000):
     src = os.path.join(src_path, mp3_file)
     dst = os.path.join(dest_path, mp3_file[:-4]+'.wav')
@@ -48,77 +47,80 @@ def convert_to_wav(mp3_file,
 
     return mp3_file[:-4] + '.wav'
 
-def get_samples(df,
+
+def get_samples(data_dict,
                 audio_src_path,
                 wav_sav_path,
-                max_samples=[None, None], 
-                csv_save_name='df',
-                seed=SEED, 
-                shuffle=True):
+                seed=args.SEED, 
+                shuffle=args.SHUFFLE_SAMPLES,):
     r"""
     Generate different samples for training from the same dataser. Also, subsamples the audio data and convert file format
     max_samples: Max duration of different splits in the same dataset
     
     usage
     ------
-    >> get_samples(df=df,
+    data_dict = {
+    'train': [train_df, (40, 20)], # in hrs
+    'val': [val_df, (2,)],
+    'test': [test_df, (2,)] 
+    }
+    
+    >> get_samples(data_dict,
             audio_src_path="/content/cv-corpus-6.1-2020-12-11/pa-IN/clips",
-            wav_sav_path="/content/train/",
-            max_samples=[20*360, 20*360], 
-            seed=SEED, 
+            wav_sav_path="/content/train/", 
+            seed=0, 
             shuffle=True)
     """
     
-    # measure wall time   
-    t0 = time.time()
-
-    if shuffle:
-      df = df.sample(frac=1, random_state=seed).reset_index(drop=True) #shuffled df
-    
-    df = df.copy()
-    df['duration'] = 0.0
-    
-
     make_dirs(wav_sav_path)
+    
+    for data_array in data_dict:
+        df, max_samples = data_array:
+        # measure wall time   
+        t0 = time.time()
 
-    start_idx = 0
-    for sample_idx in range(len(max_samples)):
-        total = 0.0
-        max_duration = max_samples[sample_idx]
+        if shuffle:
+        df = df.sample(frac=1, random_state=seed).reset_index(drop=True) #shuffle df
+        
+        df = df.copy()
+        df['duration'] = 0.0
 
-        for i in range(start_idx, len(df)):
-            mp3_file = df.iloc[i].path
-            
-            # convert to wav file from mp3
-            wav_file = convert_to_wav(mp3_file=mp3_file,
-                                        src_path=audio_src_path, 
-                                        dest_path=wav_sav_path,
-                                        dest_frame_rate=16000)
+        start_idx = 0
+        for sample_idx in range(len(max_samples)):
+            total = 0.0
+            max_duration = max_samples[sample_idx]*3600
 
-            # calculate duration of wav file
-            audio_path = os.path.join(wav_sav_path, wav_file)
-            duration = librosa.core.get_duration(filename=audio_path)
+            for i in range(start_idx, len(df)):
+                mp3_file = df.iloc[i].path
+                
+                # convert to wav file from mp3
+                wav_file = convert_to_wav(mp3_file=mp3_file,
+                                            src_path=audio_src_path, 
+                                            dest_path=wav_sav_path,
+                                            dest_frame_rate=16000)
 
-            df.at[i, 'path'] = wav_file
-            df.at[i, 'duration'] = float(duration)
+                # calculate duration of wav file
+                audio_path = os.path.join(wav_sav_path, wav_file)
+                duration = librosa.core.get_duration(filename=audio_path)
 
-            total+=duration
-            # if i%1000 == 0:
-            #   print("Now at", i)
+                df.at[i, 'path'] = wav_file
+                df.at[i, 'duration'] = float(duration)
 
-            if total >= max_duration:
-                temp_df = df[start_idx: i+1]
+                total+=duration
+                # if i%1000 == 0:
+                #   print("Now at", i)
+
+                if total >= max_duration:
+                    temp_df = df[start_idx: i+1]
+                        
+                    df_save_path = os.path.join(os.getcwd(),  
+                                                data_array + str(total//3600) + 'hrs_' + str(sample_idx)+'.csv')
                     
-                df_save_path = os.path.join(os.getcwd(),  
-                                            csv_save_name + str(max_duration//3600) + 'hrs_' + str(sample_idx)+'.csv')
-                
-                temp_df.to_csv(df_save_path, index=False)
-                start_idx = i+1
-                
-                print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path}')
-                total = 0.0
-                break
+                    temp_df.to_csv(df_save_path, index=False)
+                    start_idx = i+1
+                    
+                    print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path}')
+                    total = 0.0
+                    break
 
-    print(f'Code finished in {time.time() - t0} seconds')
-
-
+        print(f'Code for {data_array} finished in {time.time() - t0} seconds')
