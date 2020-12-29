@@ -72,7 +72,7 @@ def get_samples(data_dict,
     
     >> get_samples(data_dict,
             audio_src_path="/content/cv-corpus-6.1-2020-12-11/pa-IN/clips",
-            wav_sav_path="/content/train/", 
+            wav_sav_path="content/data/", 
             seed=0, 
             shuffle=True)
     """
@@ -94,18 +94,21 @@ def get_samples(data_dict,
         for sample_idx in range(len(max_samples)):
             total = 0.0
             max_duration = max_samples[sample_idx]*3600
-
+            
+            sav_path = os.path.join(wav_sav_path, data_split, str(sample_idx))
+            make_dirs(sav_path)
+            
             for i in range(start_idx, len(df)):
                 mp3_file = df.iloc[i].path
                 
                 # convert to wav file from mp3
                 wav_file = convert_to_wav(mp3_file=mp3_file,
                                             src_path=audio_src_path, 
-                                            dest_path=wav_sav_path,
+                                            dest_path=sav_path,
                                             dest_frame_rate=16000)
 
                 # calculate duration of wav file
-                audio_path = os.path.join(wav_sav_path, wav_file)
+                audio_path = os.path.join(sav_path, wav_file)
                 duration = librosa.core.get_duration(filename=audio_path)
 
                 df.at[i, 'path'] = wav_file
@@ -124,7 +127,7 @@ def get_samples(data_dict,
                     temp_df.to_csv(df_save_path, index=False)
                     start_idx = i+1
                     
-                    print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path}')
+                    print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path} and audio saved in {sav_path}')
                     total = 0.0
                     break
 

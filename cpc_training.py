@@ -1,3 +1,4 @@
+import torch
 import torch.nn.functional as F
 import shutil
 import time
@@ -5,6 +6,9 @@ import datetime
 import numpy as np
 import progressbar
 from multiprocessing import Pool
+from .utils import args_ctc as args
+
+from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
 
 def create_manifest(df, file_path):
     with open(file_path, "w+") as f:
@@ -165,3 +169,38 @@ def save_final_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH, arg
   shutil.move(args.CHECKPOINT_SAVE_PATH, os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as))
   shutil.move(args.CHECKPOINT_SAVE_PATH+".classifier", os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as+".classifier"))
 
+
+def train():
+    parameters = list(character_classifier.parameters()) + list(cpc_model.parameters())
+    
+    
+
+    # Load a dataset labelled with the letters of each sequence.
+    letters_labels, N_LETTERS = parseSeqLabels(args.PATH_PSEUDOLABEL_DATA_CER,)
+
+    args.N_LETTERS = len(args.CHARS) # for the blank token
+
+    data_train_cer, _ = findAllSeqs(args.PATH_TRAIN_DATA_CER, extension=args.DATA_EXT)
+    dataset_train_non_aligned = SingleSequenceDataset(args.PATH_TRAIN_DATA_CER, data_train_cer, letters_labels)
+
+    data_loader_train_letters = torch.utils.data.DataLoader(dataset_train_non_aligned, batch_size=args.TRAIN_BATCH_SIZE,
+                                                    shuffle=True)
+    
+    optim = args.OPTIMIZER
+    optimizer = optim(parameters, lr=args.LEARNING_RATE, weight_decay=args.WEIGHT_DECAY,)
+    
+    sched = args.SCHEDULER
+    lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
+
+    loss_ctc = torch.nn.CTCLoss()
+        losses_train, losses_val, cpc_model, character_classifier = run_ctc(
+            cpc_model,
+            character_classifier,
+            loss_ctc,
+            data_loader_train_letters,
+            data_loader_val_letters,
+            optimizer, lr_sch, n_epoch=args.N_EPOCH, 
+            patience=args.PATIENCE)
+
+if __name__ == "__main__":
+    train()

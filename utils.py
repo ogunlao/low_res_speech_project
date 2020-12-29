@@ -32,10 +32,12 @@ args_ctc = Namespace(
 
     # training parameters
     PATIENCE=10, # early stopping limit
-    N_EPOCH=1000,
+    N_EPOCH=300,
     CHECKPOINT_PATH = 'checkpoint_data/checkpoint_30.pt',
     MIN_LR = 0.0,
     LEARNING_RATE = 1e-4, # set starting lr
+    OPTIMIZER=torch.optim.AdamW,
+    SCHEDULER=torch.optim.lr_scheduler.CosineAnnealingLR,
     WEIGHT_DECAY = 0.001,
     BEAM_WIDTH=1, # for beam search, set to 1 since we are using max_decoding
     
