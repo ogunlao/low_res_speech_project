@@ -11,7 +11,7 @@ import time
 import librosa
 
 from .utils import make_dirs
-from .utils import args_proc as args
+from .utils import args_preproc as args
 
 def dl_commonvoice_data(url, save_path=None, unpack=True):
     r"""
