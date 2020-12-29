@@ -79,8 +79,8 @@ def get_samples(data_dict,
     
     make_dirs(wav_sav_path)
     
-    for data_array in data_dict:
-        df, max_samples = data_array
+    for data_split in data_dict:
+        df, max_samples = data_dict[data_split]
         # measure wall time   
         t0 = time.time()
 
@@ -119,7 +119,7 @@ def get_samples(data_dict,
                     temp_df = df[start_idx: i+1]
                         
                     df_save_path = os.path.join(os.getcwd(),  
-                                                data_array + str(total//3600) + 'hrs_' + str(sample_idx)+'.csv')
+                                                data_split + str(total//3600) + 'hrs_' + str(sample_idx)+'.csv')
                     
                     temp_df.to_csv(df_save_path, index=False)
                     start_idx = i+1
@@ -128,7 +128,7 @@ def get_samples(data_dict,
                     total = 0.0
                     break
 
-        print(f'Code for {data_array} finished in {time.time() - t0} seconds')
+        print(f'Code for {data_split} finished in {time.time() - t0} seconds')
         
 
 def clean_sentence(sentence):
