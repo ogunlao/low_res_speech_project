@@ -11,7 +11,7 @@ import contextlib
 import time
 import librosa
 
-from utils import make_dirs
+from .utils import make_dirs
 
 SEED = 0
 
@@ -84,7 +84,7 @@ def get_samples(df,
     start_idx = 0
     for sample_idx in range(len(max_samples)):
       total = 0.0
-      max_duration = int(max_samples[sample_idx])
+      max_duration = max_samples[sample_idx]
 
       for i in range(start_idx, len(df)):
           mp3_file = df.iloc[i].path
@@ -110,7 +110,7 @@ def get_samples(df,
               temp_df = df[start_idx: i+1]
               df_save_path = os.path.join(os.getcwd(),  
                                           'df_' + str(max_duration//3600) + 'hrs_' + str(sample_idx)+'.csv')
-              df.to_csv(df_save_path, index=False)
+              temp_df.to_csv(df_save_path, index=False)
               start_idx = i+1
               total = 0.0
 
