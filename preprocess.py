@@ -80,7 +80,7 @@ def get_samples(data_dict,
         t0 = time.time()
 
         if shuffle:
-        df = df.sample(frac=1, random_state=seed).reset_index(drop=True) #shuffle df
+            df = df.sample(frac=1, random_state=seed).reset_index(drop=True) #shuffle df
         
         df = df.copy()
         df['duration'] = 0.0
