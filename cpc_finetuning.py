@@ -7,8 +7,12 @@ import numpy as np
 import progressbar
 from multiprocessing import Pool
 from .utils import args_ctc as args
+import wget
 
 from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
+from cpc.feature_loader import loadModel
+from .utils import make_dirs
+from .cpc_model import CharacterClassifier
 
 def create_manifest(df, file_path):
     with open(file_path, "w+") as f:
@@ -169,22 +173,39 @@ def save_final_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH, arg
   shutil.move(args.CHECKPOINT_SAVE_PATH, os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as))
   shutil.move(args.CHECKPOINT_SAVE_PATH+".classifier", os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as+".classifier"))
 
-
-def train():
+def download_ckpt(ckpt_path):
+    make_dirs(ckpt_path)
+    print(f"Downloadin checkpoint data to {ckpt_path}")
+    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_30.pt",
+         ckpt_path)
+    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_logs.json",
+         ckpt_path)
+    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_args.json",
+         ckpt_path)    
+    
+def finetune_ckpt(train_data_path, val_data_path):
+    download_ckpt(ckpt_path="checkpoint_data")
+    
+    letters_labels, N_LETTERS = parseSeqLabels(args.PATH_LETTER_DATA_CER)
+    args.N_LETTERS=N_LETTERS # +1 for the blank token
+    
+    # Load model
+    cpc_model, HIDDEN_CONTEXT_MODEL, HIDDEN_ENCODER_MODEL = loadModel([args.CHECKPOINT_PATH])
+    cpc_model = cpc_model.to(device)
+    character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
     parameters = list(character_classifier.parameters()) + list(cpc_model.parameters())
     
-    
+    # Load data loader
+    data_train_cer, _ = findAllSeqs(train_data_path, extension=args.DATA_EXT)
+    dataset_train_non_aligned = SingleSequenceDataset(train_data_path, data_train_cer, letters_labels)
 
-    # Load a dataset labelled with the letters of each sequence.
-    letters_labels, N_LETTERS = parseSeqLabels(args.PATH_PSEUDOLABEL_DATA_CER,)
-
-    args.N_LETTERS = len(args.CHARS) # for the blank token
-
-    data_train_cer, _ = findAllSeqs(args.PATH_TRAIN_DATA_CER, extension=args.DATA_EXT)
-    dataset_train_non_aligned = SingleSequenceDataset(args.PATH_TRAIN_DATA_CER, data_train_cer, letters_labels)
+    data_val_cer, _ = findAllSeqs(val_data_path, extension=args.DATA_EXT)
+    dataset_val_non_aligned = SingleSequenceDataset(val_data_path, data_val_cer, letters_labels)
 
     data_loader_train_letters = torch.utils.data.DataLoader(dataset_train_non_aligned, batch_size=args.TRAIN_BATCH_SIZE,
-                                                    shuffle=True)
+                                                    shuffle=False)
+    data_loader_val_letters = torch.utils.data.DataLoader(dataset_val_non_aligned, batch_size=args.VAL_BATCH_SIZE,
+                                                shuffle=False)
     
     optim = args.OPTIMIZER
     optimizer = optim(parameters, lr=args.LEARNING_RATE, weight_decay=args.WEIGHT_DECAY,)
@@ -193,14 +214,16 @@ def train():
     lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
 
     loss_ctc = torch.nn.CTCLoss()
-        losses_train, losses_val, cpc_model, character_classifier = run_ctc(
-            cpc_model,
-            character_classifier,
-            loss_ctc,
-            data_loader_train_letters,
-            data_loader_val_letters,
-            optimizer, lr_sch, n_epoch=args.N_EPOCH, 
-            patience=args.PATIENCE)
+    
+    losses_train, losses_val, cpc_model, character_classifier = run_ctc(
+        cpc_model,
+        character_classifier,
+        loss_ctc,
+        data_loader_train_letters,
+        data_loader_val_letters,
+        optimizer, lr_sch, n_epoch=args.N_EPOCH, 
+        patience=args.PATIENCE)
 
 if __name__ == "__main__":
-    train()
+    args = sys.argv[1:]
+    finetune_ckpt(args[0], args[1])
