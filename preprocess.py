@@ -75,7 +75,7 @@ def get_samples(data_dict,
     make_dirs(wav_sav_path)
     
     for data_array in data_dict:
-        df, max_samples = data_array:
+        df, max_samples = data_array
         # measure wall time   
         t0 = time.time()
 
