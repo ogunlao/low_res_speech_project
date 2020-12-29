@@ -62,4 +62,4 @@ args_ctc = Namespace(
 )
 
 args_ctc.DEVICE = True if torch.cuda.is_available() else False
-args_ctc.CUT_OFF_TOP_N = len(args.CHARS)
+args_ctc.CUT_OFF_TOP_N = len(args_ctc.CHARS)
