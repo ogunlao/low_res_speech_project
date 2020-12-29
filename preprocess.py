@@ -1,4 +1,3 @@
-
 import wget
 import pandas as pd
 from pathlib import Path
@@ -51,8 +50,9 @@ def convert_to_wav(mp3_file,
 
 def get_samples(df,
                 audio_src_path,
-                wav_sav_path, 
+                wav_sav_path,
                 max_samples=[None, None], 
+                csv_save_name='df',
                 seed=SEED, 
                 shuffle=True):
     r"""
@@ -83,42 +83,42 @@ def get_samples(df,
 
     start_idx = 0
     for sample_idx in range(len(max_samples)):
-      total = 0.0
-      max_duration = max_samples[sample_idx]
+        total = 0.0
+        max_duration = max_samples[sample_idx]
 
-      for i in range(start_idx, len(df)):
-          mp3_file = df.iloc[i].path
-          
-          # convert to wav file from mp3
-          wav_file = convert_to_wav(mp3_file=mp3_file,
-                                    src_path=audio_src_path, 
-                                    dest_path=wav_sav_path,
-                                    dest_frame_rate=16000)
+        for i in range(start_idx, len(df)):
+            mp3_file = df.iloc[i].path
+            
+            # convert to wav file from mp3
+            wav_file = convert_to_wav(mp3_file=mp3_file,
+                                        src_path=audio_src_path, 
+                                        dest_path=wav_sav_path,
+                                        dest_frame_rate=16000)
 
-          # calculate duration of wav file
-          audio_path = os.path.join(wav_sav_path, wav_file)
-          duration = librosa.core.get_duration(filename=audio_path)
+            # calculate duration of wav file
+            audio_path = os.path.join(wav_sav_path, wav_file)
+            duration = librosa.core.get_duration(filename=audio_path)
 
-          df.at[i, 'path'] = wav_file
-          df.at[i, 'duration'] = float(duration)
+            df.at[i, 'path'] = wav_file
+            df.at[i, 'duration'] = float(duration)
 
-          total+=duration
-          # if i%1000 == 0:
-          #   print("Now at", i)
+            total+=duration
+            # if i%1000 == 0:
+            #   print("Now at", i)
 
-          if total >= max_duration:
-              temp_df = df[start_idx: i+1]
-              df_save_path = os.path.join(os.getcwd(),  
-                                          'df_' + str(max_duration//3600) + 'hrs_' + str(sample_idx)+'.csv')
-              temp_df.to_csv(df_save_path, index=False)
-              start_idx = i+1
-              total = 0.0
+            if total >= max_duration:
+                temp_df = df[start_idx: i+1]
+                    
+                df_save_path = os.path.join(os.getcwd(),  
+                                            csv_save_name + str(max_duration//3600) + 'hrs_' + str(sample_idx)+'.csv')
+                
+                temp_df.to_csv(df_save_path, index=False)
+                start_idx = i+1
+                
+                print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path}')
+                total = 0.0
+                break
 
-              print(f'finished sampling for {max_duration/3600} hrs, csv saved in {df_save_path}')
-              print(f'{total/3600}')
-
-              break
-
-      print(f'Code finished in {time.time() - t0} seconds')
+    print(f'Code finished in {time.time() - t0} seconds')
 
 
