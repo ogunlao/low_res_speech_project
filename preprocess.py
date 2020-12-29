@@ -10,6 +10,11 @@ import contextlib
 import time
 import librosa
 
+from unicodedata import normalize
+import string
+import re
+import shutil
+
 from .utils import make_dirs
 from .utils import args_preproc as args
 
@@ -29,7 +34,7 @@ def dl_commonvoice_data(url, save_path=None, unpack=True):
     
     print(f"file sucessfully downloaded in dir {save_path}")
     if unpack:
-        patoolib.extract_archive(filename, outdir=save_path)
+        extract_archive(filename, outdir=save_path)
         print(f"file sucessfully unpacked in dir {save_path}")
 
 
@@ -124,3 +129,65 @@ def get_samples(data_dict,
                     break
 
         print(f'Code for {data_array} finished in {time.time() - t0} seconds')
+        
+
+def clean_sentence(sentence):
+    """function to clean text, remove punctuations and normalize text """
+    # prepare regex for char filtering
+    re_print = re.compile('[^%s]' % re.escape(string.printable))
+    # prepare translation table for removing punctuation
+    table = str.maketrans('', '', '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~')
+    #table = str.maketrans('', '', string.punctuation)
+
+    # normalize unicode characters
+    sentence = normalize('NFD', sentence).encode('ascii', 'ignore')
+    sentence = sentence.decode('UTF-8')
+    # tokenize on white space
+    sentence = sentence.split()
+    # convert to lower case
+    sentence = [word.lower() for word in sentence]
+    # remove punctuation from each token   
+    sentence = [word.translate(table) for word in sentence]
+    # remove non-printable chars form each token
+    sentence = [re_print.sub('', w) for w in sentence]
+    # remove tokens with numbers in them
+    # sentence = [word for word in sentence if word.isalpha()]
+    # return as string
+
+    return ' '.join(sentence)
+
+
+def convert_text_to_index(df, 
+                          character_to_index, 
+                          audio_path, file_name, 
+                          dest_path='', max_sec=None, use_pseudolabel=False):
+    if max_sec:
+        make_dirs(dest_path)
+
+    total_sec = 0.0
+    with open(file_name, "a+") as all_session_text:
+        for i in range(len(df)):
+            wav_name = df.iloc[i]['path']
+            wav_path = os.path.join(audio_path, wav_name)
+
+            if use_pseudolabel:
+                sentence = df.iloc[i]['pseudolabels']
+            else:
+                sentence = clean_sentence(df.iloc[i]['sentence'])
+            
+            indices = ''
+            for c in sentence: 
+                indices+=str(character_to_index[c.lower()]) + ' ' 
+            #wav_name[:-4] to remove the extension   
+            all_session_text.writelines(wav_name[:-4] + ' ' + indices + '\n')
+            total_sec += df.iloc[i].duration
+
+            if max_sec: # move to new path if subsampling
+              shutil.copy2(wav_path, dest_path)
+              # if os.path.exists(wav_path):
+              #   os.rename(wav_path, os.path.join(dest_path, wav_name))
+
+            if max_sec and total_sec >= max_sec:
+                break
+        
+    print(f'Total duration of file added from {audio_path} is {total_sec//3600}hrs')
