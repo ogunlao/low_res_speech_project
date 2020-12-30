@@ -17,6 +17,10 @@ import shutil
 
 from .utils import make_dirs
 from .utils import args_preproc as args
+from .utils import args_ctc
+import progressbar
+
+device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
 def dl_commonvoice_data(url, save_path=None, unpack=True):
     r"""
@@ -194,3 +198,65 @@ def convert_text_to_index(df,
                 break
         
     print(f'Total duration of file added from {audio_path} is {total_sec//3600}hrs')
+    
+
+def get_pseudolabels(df, data_dataloader,
+                     cpc_model,
+                     character_classifier, args=args):
+  df = df.sort_values(by=['path'], axis=0, ascending=True,
+                      inplace=False, ignore_index=True)
+
+  t0 = time.time()
+
+  downsampling_factor = 1
+  cpc_model.eval()
+  character_classifier.eval()
+
+  all_transcriptions = []
+
+  print("Starting the get pesudolabels using max-decoding")
+  bar = progressbar.ProgressBar(maxval=len(data_dataloader))
+  bar.start()
+
+  decoder = CTCBeamDecoder(args_ctc.CHARS, log_probs_input=False, blank_id=0, beam_width=args_ctc.BEAM_WIDTH,
+                           cutoff_top_n=args_ctc.CUT_OFF_TOP_N)  # model_path="/content/wiki_00.lm.arpa")
+  for index, data in enumerate(data_dataloader):
+
+    bar.update(index)
+    with torch.no_grad():
+        seq, sizeSeq, phone, sizePhone = prepare_data(data)
+        x_batch_len = seq.shape[-1]
+        c_feature, _, _ = cpc_model(seq.to(device), phone.to(device))
+        bs = c_feature.size(0)
+        sizeSeq = sizeSeq / downsampling_factor
+        predictions = torch.nn.functional.softmax(
+            character_classifier(c_feature), dim=2
+        ).cpu()
+        phone = phone.cpu()
+        sizeSeq = sizeSeq.cpu()
+        sizePhone = sizePhone.cpu()
+        # print("predictions",predictions.argmax(2)[0])
+        # print(phone[0])
+
+        seq_len = torch.tensor([int(predictions.shape[1]*sizeSeq[i]/(x_batch_len))
+                                for i in range(predictions.shape[0])])  # this is an approximation, should be good enough
+        #print(seq_len)
+
+        output, scores, timesteps, out_seq_len = decoder.decode(
+            predictions, seq_lens=seq_len)
+
+        output = output[torch.arange(bs), scores.argmax(1), :]
+        out_seq_len = out_seq_len[torch.arange(bs), scores.argmax(1)]
+
+        # print(output, output.shape)
+        # print(out_seq_len, out_seq_len.shape)
+
+        batch_size = output.shape[0]
+
+        transcripts = ["".join(args.CHARS[n] for n in output[bs]
+                               [:out_seq_len[bs]]) for bs in range(batch_size)]
+
+        all_transcriptions.extend(transcripts)
+  df['pseudolabels'] = all_transcriptions
+  bar.finish()
+  return df

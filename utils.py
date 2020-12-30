@@ -9,6 +9,7 @@ def make_dirs(path):
 args_preproc = Namespace(
     # parameters for sampling
     SHUFFLE_SAMPLES=True,
+    BEAM_WIDTH=1,
     
     SEED = 0,)
 
@@ -56,7 +57,7 @@ args_ctc = Namespace(
 
     AUDIO_PATH_TRAIN="content/clips_16k/train/0",
     AUDIO_PATH_DEV = "content/clips_16k/val/0",
-    AUDIO_PATH_TEST = "content/clips_16k/val/0",
+    AUDIO_PATH_TEST = "content/clips_16k/test/0",
 
     FINAL_MODEL_SAVE_PATH = '/content/drive/My Drive/Colab Notebooks/data/fr/',
     CHECKPOINT_SAVE_PATH = "/content/checkpoint.ckpt",

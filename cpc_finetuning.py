@@ -167,7 +167,7 @@ def load_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH):
   return model, classifier
 
 
-def save_final_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH, args=args):
+def save_final_checkpoint(path=args.CHECKPOINT_SAVE_PATH, args=args):
   make_dirs(args.FINAL_MODEL_SAVE_PATH)
 
   pid=os.getpid()
