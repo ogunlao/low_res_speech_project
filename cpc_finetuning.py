@@ -6,13 +6,15 @@ import datetime
 import numpy as np
 import progressbar
 from multiprocessing import Pool
-from low_res_speech_project.utils import args_ctc as args
+from utils import args_ctc as args
 import wget
+import sys
 
 from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
 from cpc.feature_loader import loadModel
-from low_res_speech_project.utils import make_dirs
-from low_res_speech_project.cpc_model import CharacterClassifier
+from utils import make_dirs
+from cpc_models import CharacterClassifier
+from cpc_eval import get_cer
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
@@ -21,7 +23,7 @@ def create_manifest(df, file_path):
         for i in range(len(df)):
             wav_name = df.iloc[i]['path']
             wav_name = wav_name[:-4]
-            print(wav_name, file=f)
+            print(wav_name, f)
         
 
 def train_one_epoch_ctc(cpc_model, 
@@ -141,14 +143,14 @@ def run_ctc(cpc_model, character_classifier,
       cpc_model, character_classifier = load_checkpoint(cpc_model, character_classifier)
       
       # save a copy in drive
-      save_final_checkpoint(cpc_model, character_classifier)
+      # save_final_checkpoint(cpc_model, character_classifier)
 
       print(f'Training finished in {(time.time() - t0)/3600} hours')
   except KeyboardInterrupt:
       print("Loading checkpoint after interrupt...")
       cpc_model, character_classifier = load_checkpoint(cpc_model, character_classifier)
       # save a copy in drive
-      save_final_checkpoint(cpc_model, character_classifier)
+      # save_final_checkpoint(cpc_model, character_classifier)
 
   return losses_train, losses_val, cpc_model, character_classifier #, cer_val
 
@@ -184,8 +186,30 @@ def download_ckpt(ckpt_path):
          out=ckpt_path)
     wget.download(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_args.json",
          out=ckpt_path)    
+
+def create_dataloader(train_data_path, val_data_path, test_data_path, args=args):
+    # Load data loader
+    data_train_cer, _ = findAllSeqs(train_data_path, extension=args.DATA_EXT)
+    dataset_train_non_aligned = SingleSequenceDataset(train_data_path, data_train_cer, letters_labels)
+
+    data_val_cer, _ = findAllSeqs(val_data_path, extension=args.DATA_EXT)
+    dataset_val_non_aligned = SingleSequenceDataset(val_data_path, data_val_cer, letters_labels)
+
+    data_test_cer, _ = findAllSeqs(test_data_path, extension=args.DATA_EXT)
+    dataset_test_non_aligned = SingleSequenceDataset(test_data_path, data_test_cer, letters_labels)
     
-def finetune_ckpt(train_data_path, val_data_path, args=args):
+    data_loader_train_letters = torch.utils.data.DataLoader(dataset_train_non_aligned, batch_size=args.TRAIN_BATCH_SIZE,
+                                                    shuffle=True)
+    data_loader_val_letters = torch.utils.data.DataLoader(dataset_val_non_aligned, batch_size=args.VAL_BATCH_SIZE,
+                                                shuffle=False)
+    data_loader_test_letters = torch.utils.data.DataLoader(dataset_test_non_aligned, batch_size=args.VAL_BATCH_SIZE,
+                                                shuffle=False)
+    
+    return {'train': data_loader_train_letters,
+            'val': data_loader_val_letters,
+            'test': data_loader_test_letters}
+    
+def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     download_ckpt(ckpt_path="checkpoint_data")
     
     
@@ -196,22 +220,13 @@ def finetune_ckpt(train_data_path, val_data_path, args=args):
     cpc_model, HIDDEN_CONTEXT_MODEL, HIDDEN_ENCODER_MODEL = loadModel([args.CHECKPOINT_PATH])
     cpc_model = cpc_model.to(device)
     character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
-    parameters = list(character_classifier.parameters()) + list(cpc_model.parameters())
-    
-    # Load data loader
-    data_train_cer, _ = findAllSeqs(train_data_path, extension=args.DATA_EXT)
-    dataset_train_non_aligned = SingleSequenceDataset(train_data_path, data_train_cer, letters_labels)
-
-    data_val_cer, _ = findAllSeqs(val_data_path, extension=args.DATA_EXT)
-    dataset_val_non_aligned = SingleSequenceDataset(val_data_path, data_val_cer, letters_labels)
-
-    data_loader_train_letters = torch.utils.data.DataLoader(dataset_train_non_aligned, batch_size=args.TRAIN_BATCH_SIZE,
-                                                    shuffle=False)
-    data_loader_val_letters = torch.utils.data.DataLoader(dataset_val_non_aligned, batch_size=args.VAL_BATCH_SIZE,
-                                                shuffle=False)
+    if args.FREEZE_ENCODER:
+      parameters = character_classifier.parameters()
+    else:
+      parameters = list(character_classifier.parameters()) + list(cpc_model.parameters())
     
     optim = args.OPTIMIZER
-    optimizer = optim(parameters, lr=args.LEARNING_RATE, weight_decay=args.WEIGHT_DECAY,)
+    optimizer = optim(parameters, lr=args.LEARNING_RATE)#, weight_decay=args.WEIGHT_DECAY,)
     
     sched = args.SCHEDULER
     lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
@@ -226,10 +241,27 @@ def finetune_ckpt(train_data_path, val_data_path, args=args):
         data_loader_val_letters,
         optimizer, lr_sch, n_epoch=args.N_EPOCH, 
         patience=args.PATIENCE)
+    
+    return cpc_model, character_classifier
 
 if __name__ == "__main__":
-    if sys.argv > 2:
+    if len(sys.argv) > 2:
         args.PATH_TRAIN_DATA_CER = sys.argv[1]
         args.PATH_VAL_DATA_CER = sys.argv[2]
+        args.PATH_TEST_DATA_CER = sys.argv[3]
     
-    finetune_ckpt(args.PATH_TRAIN_DATA_CER, args.PATH_VAL_DATA_CER)
+    dataloaders = create_dataloader(args.PATH_TRAIN_DATA_CER, 
+                                    args.PATH_VAL_DATA_CER, 
+                                    args.PATH_TEST_DATA_CER)
+    
+    cpc_model, character_classifier = finetune_ckpt(args.PATH_TRAIN_DATA_CER, args.PATH_VAL_DATA_CER, dataloaders)
+    
+    val_cer = get_cer(dataloaders["val"], cpc_model, character_classifier)
+    test_cer = get_cer(dataloaders["test"], cpc_model, character_classifier, args)
+    
+    print(f"val cer: {val_cer}, test cer: {test_cer}")
+    
+    # save to file
+    filepath = "result.txt"
+    with open(file_path, "w+") as f:
+          print(f"val cer: {val_cer}, test cer: {test_cer}", f)
