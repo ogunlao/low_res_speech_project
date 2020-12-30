@@ -38,9 +38,9 @@ args_ctc = Namespace(
     CHECKPOINT_PATH = 'checkpoint_data/checkpoint_30.pt',
     MIN_LR = 0.0,
     LEARNING_RATE = 1e-4, # set starting lr
-    OPTIMIZER=torch.optim.Adam
+    OPTIMIZER=torch.optim.Adam,
     SCHEDULER=torch.optim.lr_scheduler.CosineAnnealingLR,
-    WEIGHT_DECAY = 0.001,
+    WEIGHT_DECAY = 0.000,
     BEAM_WIDTH=1, # for beam search, set to 1 since we are using max_decoding
     
 
@@ -53,7 +53,7 @@ args_ctc = Namespace(
 
     TRAIN_BATCH_SIZE=16,
     VAL_BATCH_SIZE = 8,
-    MAX_TRAINING_DURATION = 20*60*60, # change between 2, 10 and 20 hrs
+    MAX_TRAINING_DURATION = 2*60*60, # change between 2, 10 and 20 hrs
 
     AUDIO_PATH_TRAIN="content/clips_16k/train/0",
     AUDIO_PATH_DEV = "content/clips_16k/val/0",

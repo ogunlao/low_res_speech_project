@@ -9,6 +9,7 @@ import wave
 import contextlib
 import time
 import librosa
+import torch
 
 from unicodedata import normalize
 import string
@@ -20,7 +21,7 @@ from .utils import args_preproc as args
 from .utils import args_ctc
 import progressbar
 
-device = torch.device("cuda:0" if args.DEVICE else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def dl_commonvoice_data(url, save_path=None, unpack=True):
     r"""
