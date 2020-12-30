@@ -137,14 +137,14 @@ def get_samples(data_dict,
 def clean_sentence(sentence):
     """function to clean text, remove punctuations and normalize text """
     # prepare regex for char filtering
-    re_print = re.compile('[^%s]' % re.escape(string.printable))
+    #re_print = re.compile('[^%s]' % re.escape(string.printable))
     # prepare translation table for removing punctuation
     table = str.maketrans('', '', '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~')
     #table = str.maketrans('', '', string.punctuation)
 
     # normalize unicode characters
-    sentence = normalize('NFD', sentence).encode('ascii', 'ignore')
-    sentence = sentence.decode('UTF-8')
+    #sentence = normalize('NFD', sentence).encode('ascii', 'ignore')
+    #sentence = sentence.decode('UTF-8')
     # tokenize on white space
     sentence = sentence.split()
     # convert to lower case
@@ -152,7 +152,7 @@ def clean_sentence(sentence):
     # remove punctuation from each token   
     sentence = [word.translate(table) for word in sentence]
     # remove non-printable chars form each token
-    sentence = [re_print.sub('', w) for w in sentence]
+    #sentence = [re_print.sub('', w) for w in sentence]
     # remove tokens with numbers in them
     # sentence = [word for word in sentence if word.isalpha()]
     # return as string

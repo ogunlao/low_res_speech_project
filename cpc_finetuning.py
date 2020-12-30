@@ -14,6 +14,8 @@ from cpc.feature_loader import loadModel
 from .utils import make_dirs
 from .cpc_model import CharacterClassifier
 
+device = torch.device("cuda:0" if args.DEVICE else "cpu")
+
 def create_manifest(df, file_path):
     with open(file_path, "w+") as f:
         for i in range(len(df)):
@@ -176,15 +178,16 @@ def save_final_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH, arg
 def download_ckpt(ckpt_path):
     make_dirs(ckpt_path)
     print(f"Downloadin checkpoint data to {ckpt_path}")
-    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_30.pt",
-         ckpt_path)
-    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_logs.json",
-         ckpt_path)
-    wget(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_args.json",
-         ckpt_path)    
+    wget.download(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_30.pt",
+         out=ckpt_path)
+    wget.download(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_logs.json",
+         out=ckpt_path)
+    wget.download(url="https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/not_hub/2levels_6k_top_ctc/checkpoint_args.json",
+         out=ckpt_path)    
     
-def finetune_ckpt(train_data_path, val_data_path):
+def finetune_ckpt(train_data_path, val_data_path, args=args):
     download_ckpt(ckpt_path="checkpoint_data")
+    
     
     letters_labels, N_LETTERS = parseSeqLabels(args.PATH_LETTER_DATA_CER)
     args.N_LETTERS=N_LETTERS # +1 for the blank token
@@ -225,5 +228,8 @@ def finetune_ckpt(train_data_path, val_data_path):
         patience=args.PATIENCE)
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    finetune_ckpt(args[0], args[1])
+    if sys.argv > 2:
+        args.PATH_TRAIN_DATA_CER = sys.argv[1]
+        args.PATH_VAL_DATA_CER = sys.argv[2]
+    
+    finetune_ckpt(args.PATH_TRAIN_DATA_CER, args.PATH_VAL_DATA_CER)
