@@ -189,6 +189,8 @@ def download_ckpt(ckpt_path):
 
 def create_dataloader(train_data_path, val_data_path, test_data_path, args=args):
     # Load data loader
+    letters_labels, N_LETTERS = parseSeqLabels(args.PATH_LETTER_DATA_CER)
+    
     data_train_cer, _ = findAllSeqs(train_data_path, extension=args.DATA_EXT)
     dataset_train_non_aligned = SingleSequenceDataset(train_data_path, data_train_cer, letters_labels)
 
@@ -199,11 +201,11 @@ def create_dataloader(train_data_path, val_data_path, test_data_path, args=args)
     dataset_test_non_aligned = SingleSequenceDataset(test_data_path, data_test_cer, letters_labels)
     
     data_loader_train_letters = torch.utils.data.DataLoader(dataset_train_non_aligned, batch_size=args.TRAIN_BATCH_SIZE,
-                                                    shuffle=True)
+                                                    shuffle=True,)
     data_loader_val_letters = torch.utils.data.DataLoader(dataset_val_non_aligned, batch_size=args.VAL_BATCH_SIZE,
-                                                shuffle=False)
+                                                shuffle=False,)
     data_loader_test_letters = torch.utils.data.DataLoader(dataset_test_non_aligned, batch_size=args.VAL_BATCH_SIZE,
-                                                shuffle=False)
+                                                shuffle=False,)
     
     return {'train': data_loader_train_letters,
             'val': data_loader_val_letters,
@@ -233,6 +235,9 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
 
     loss_ctc = torch.nn.CTCLoss()
     
+    data_loader_train_letters = dataloaders['train']
+    data_loader_val_letters = dataloaders['val']
+    
     losses_train, losses_val, cpc_model, character_classifier = run_ctc(
         cpc_model,
         character_classifier,
@@ -252,7 +257,7 @@ if __name__ == "__main__":
     
     dataloaders = create_dataloader(args.PATH_TRAIN_DATA_CER, 
                                     args.PATH_VAL_DATA_CER, 
-                                    args.PATH_TEST_DATA_CER)
+                                    args.PATH_TEST_DATA_CER,)
     
     cpc_model, character_classifier = finetune_ckpt(args.PATH_TRAIN_DATA_CER, args.PATH_VAL_DATA_CER, dataloaders)
     
