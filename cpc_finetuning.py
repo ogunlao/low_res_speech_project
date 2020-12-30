@@ -6,13 +6,13 @@ import datetime
 import numpy as np
 import progressbar
 from multiprocessing import Pool
-from .utils import args_ctc as args
+from low_res_speech_project.utils import args_ctc as args
 import wget
 
 from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
 from cpc.feature_loader import loadModel
-from .utils import make_dirs
-from .cpc_model import CharacterClassifier
+from low_res_speech_project.utils import make_dirs
+from low_res_speech_project.cpc_model import CharacterClassifier
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
