@@ -3,6 +3,10 @@ import progressbar
 from multiprocessing import Pool
 from ctcdecode import CTCBeamDecoder
 from utils import args_ctc as args
+import time
+import torch
+
+device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
 def cut_data(seq, sizeSeq):
     maxSeq = sizeSeq.max()

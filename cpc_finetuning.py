@@ -267,6 +267,6 @@ if __name__ == "__main__":
     print(f"val cer: {val_cer}, test cer: {test_cer}")
     
     # save to file
-    filepath = "result.txt"
-    with open(file_path, "w+") as f:
-          print(f"val cer: {val_cer}, test cer: {test_cer}", f)
+    file_path = "result.txt"
+    with open(file_path, "a+") as f:
+          print(f"val cer: {val_cer}, test cer: {test_cer}", file=f)
