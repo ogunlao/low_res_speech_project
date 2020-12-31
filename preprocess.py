@@ -20,8 +20,23 @@ from .utils import make_dirs
 from .utils import args_preproc as args
 from .utils import args_ctc
 import progressbar
+from ctcdecode import CTCBeamDecoder
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+def prepare_data(data):
+    seq, sizeSeq, char, sizeChar = data
+    seq = seq.cuda()
+    char = char.cuda()
+    sizeSeq = sizeSeq.cuda().view(-1)
+    sizeChar = sizeChar.cuda().view(-1)
+
+    seq = cut_data(seq.permute(0, 2, 1), sizeSeq).permute(0, 2, 1)
+    return seq, sizeSeq, char, sizeChar
+
+def cut_data(seq, sizeSeq):
+    maxSeq = sizeSeq.max()
+    return seq[:, :maxSeq]
 
 def dl_commonvoice_data(url, save_path=None, unpack=True):
     r"""
@@ -254,7 +269,7 @@ def get_pseudolabels(df, data_dataloader,
 
         batch_size = output.shape[0]
 
-        transcripts = ["".join(args.CHARS[n] for n in output[bs]
+        transcripts = ["".join(args_ctc.CHARS[n] for n in output[bs]
                                [:out_seq_len[bs]]) for bs in range(batch_size)]
 
         all_transcriptions.extend(transcripts)
