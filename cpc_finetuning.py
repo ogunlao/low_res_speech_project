@@ -15,6 +15,7 @@ from cpc.feature_loader import loadModel
 from utils import make_dirs
 from cpc_models import CharacterClassifier
 from cpc_eval import get_cer
+import pytorch_warmup as warmup
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
@@ -97,7 +98,7 @@ def validation_step(cpc_model,
 def run_ctc(cpc_model, character_classifier, 
             loss_criterion, data_loader_train, 
             data_loader_val, optimizer,
-            lr_sch, n_epoch,
+            lr_sch, warmup_scheduler, n_epoch,
             patience=5, args=args):
   
   t0 = time.time()
@@ -110,7 +111,7 @@ def run_ctc(cpc_model, character_classifier,
   try:
       for epoch in range(n_epoch):
 
-        print(f"Running epoch {epoch + 1} / {n_epoch}")
+        print(f"Running epoch {epoch+1} / {n_epoch}")
         loss_train = train_one_epoch_ctc(cpc_model, character_classifier, loss_criterion, data_loader_train, optimizer)
         losses_train.append(loss_train)
         print("-------------------")
@@ -122,6 +123,7 @@ def run_ctc(cpc_model, character_classifier,
         loss_val = validation_step(cpc_model, character_classifier, loss_criterion, data_loader_val)
         losses_val.append(loss_val)
         lr_sch.step()
+        warmup_scheduler.dampen()
         # print(optimizer.param_groups[0]['lr'])
 
         if loss_val < min_loss:
@@ -232,6 +234,8 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     
     sched = args.SCHEDULER
     lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
+    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+    warmup_scheduler.last_step = -1 # initialize the step counter
 
     loss_ctc = torch.nn.CTCLoss()
     
@@ -244,7 +248,7 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
         loss_ctc,
         data_loader_train_letters,
         data_loader_val_letters,
-        optimizer, lr_sch, n_epoch=args.N_EPOCH, 
+        optimizer, lr_sch, warmup_scheduler, n_epoch=args.N_EPOCH, 
         patience=args.PATIENCE)
     
     return cpc_model, character_classifier

@@ -163,8 +163,8 @@ def clean_sentence(sentence):
     #table = str.maketrans('', '', string.punctuation)
 
     # normalize unicode characters
-    #sentence = normalize('NFD', sentence).encode('ascii', 'ignore')
-    #sentence = sentence.decode('UTF-8')
+    sentence = normalize('NFD', sentence).encode('ascii', 'ignore')
+    sentence = sentence.decode('UTF-8')
     # tokenize on white space
     sentence = sentence.split()
     # convert to lower case

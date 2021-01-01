@@ -16,6 +16,7 @@ args_preproc = Namespace(
 args_ctc = Namespace(  
     SEED = 0,
     FREEZE_ENCODER=False,
+    DROPOUT=0.4,
     
     # parameters for encoder/decoder CTC
     DIM_ENCODER=256,

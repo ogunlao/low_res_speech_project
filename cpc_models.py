@@ -1,4 +1,5 @@
 import torch
+from utils import args_ctc as args
 
 class CPCModel(torch.nn.Module):
     def __init__(self, encoder, AR):
@@ -16,9 +17,11 @@ class CPCModel(torch.nn.Module):
 class CharacterClassifier(torch.nn.Module):
   def __init__(self,
                input_dim : int,
-               n_characters : int):
+               n_characters : int,
+               drop_p=args.DROPOUT):
     super(CharacterClassifier, self).__init__()
     self.linear = torch.nn.Linear(input_dim, n_characters)
+    self.dropout = torch.nn.Dropout(p=drop_p)
     
   def forward(self, x):
     return self.linear(x)
