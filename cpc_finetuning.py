@@ -183,8 +183,8 @@ def save_final_checkpoint(path=args.CHECKPOINT_SAVE_PATH, args=args):
   dt=datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
   save_model_as = 'cpc_checkpoint_ps_'+str(dt)+str(pid)+'.ckpt'
-  shutil.move(args.CHECKPOINT_SAVE_PATH, os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as))
-  shutil.move(args.CHECKPOINT_SAVE_PATH+".classifier", os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as+".classifier"))
+  shutil.copy2(args.CHECKPOINT_SAVE_PATH, os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as))
+  shutil.copy2(args.CHECKPOINT_SAVE_PATH+".classifier", os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as+".classifier"))
 
 def download_ckpt(ckpt_path):
     make_dirs(ckpt_path)
