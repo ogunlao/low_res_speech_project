@@ -19,6 +19,13 @@ import pytorch_warmup as warmup
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
+def set_seed(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        
 def create_manifest(df, file_path):
     with open(file_path, "w+") as f:
         for i in range(len(df)):
@@ -234,7 +241,7 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     
     sched = args.SCHEDULER
     lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
-    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+    warmup_scheduler = warmup.ExponentialWarmup(optimizer, warmup_period=args.WARMUP_PERIOD)
     warmup_scheduler.last_step = -1 # initialize the step counter
 
     loss_ctc = torch.nn.CTCLoss()
@@ -258,6 +265,8 @@ if __name__ == "__main__":
         args.PATH_TRAIN_DATA_CER = sys.argv[1]
         args.PATH_VAL_DATA_CER = sys.argv[2]
         args.PATH_TEST_DATA_CER = sys.argv[3]
+    
+    set_seed(args.SEED):
     
     dataloaders = create_dataloader(args.PATH_TRAIN_DATA_CER, 
                                     args.PATH_VAL_DATA_CER, 

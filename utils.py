@@ -17,6 +17,7 @@ args_ctc = Namespace(
     SEED = 0,
     FREEZE_ENCODER=False,
     DROPOUT=0.4,
+    WARMUP_PERIOD=1000,
     
     # parameters for encoder/decoder CTC
     DIM_ENCODER=256,
