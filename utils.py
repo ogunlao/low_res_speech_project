@@ -16,8 +16,11 @@ args_preproc = Namespace(
 args_ctc = Namespace(  
     SEED = 0,
     FREEZE_ENCODER=False,
-    DROPOUT=0.4,
-    WARMUP_PERIOD=1000,
+    DROPOUT=0.2,
+    WARMUP_PERIOD=20,
+    
+    VAL_DF = None,
+    PRINT_SAMPLE_PS = True,
     
     # parameters for encoder/decoder CTC
     DIM_ENCODER=256,

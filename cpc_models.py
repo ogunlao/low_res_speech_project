@@ -24,4 +24,4 @@ class CharacterClassifier(torch.nn.Module):
     self.dropout = torch.nn.Dropout(p=drop_p)
     
   def forward(self, x):
-    return self.linear(x)
+    return self.linear(self.dropout(x))

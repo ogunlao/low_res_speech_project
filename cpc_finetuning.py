@@ -17,6 +17,12 @@ from cpc_models import CharacterClassifier
 from cpc_eval import get_cer
 import pytorch_warmup as warmup
 
+import random
+import numpy as np
+import pandas as pd
+from .preprocess import get_pseudolabels
+
+
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
 def set_seed(seed):
@@ -73,16 +79,22 @@ def train_one_epoch_ctc(cpc_model,
 def validation_step(cpc_model, 
                     character_classifier, 
                     loss_criterion, 
-                    data_loader):
+                    data_loader, args=args):
 
   cpc_model.eval()
   character_classifier.eval()
   avg_loss = 0
   avg_accuracy = 0
   n_items = 0
+  
+  if args.VAL_DF:
+    val_df = pd.read_csv(args.VAL_DF)
   with torch.no_grad():
     for step, full_data in enumerate(data_loader):
-
+      
+      if args.VAL_DF and step == 0:        
+          get_pseudolabels(val_df, dataloader, cpc_model, character_classifier, args)
+        
       x, x_len, y, y_len = full_data
 
       x_batch_len = x.shape[-1]
@@ -129,7 +141,7 @@ def run_ctc(cpc_model, character_classifier,
         print("Validation dataset")
         loss_val = validation_step(cpc_model, character_classifier, loss_criterion, data_loader_val)
         losses_val.append(loss_val)
-        lr_sch.step()
+        lr_sch.step(epoch)
         warmup_scheduler.dampen()
         # print(optimizer.param_groups[0]['lr'])
 
@@ -247,7 +259,7 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     loss_ctc = torch.nn.CTCLoss()
     
     data_loader_train_letters = dataloaders['train']
-    data_loader_val_letters = dataloaders['val']
+    data_loader_val_letters = dataloaders['val'get_pseudolabels]
     
     losses_train, losses_val, cpc_model, character_classifier = run_ctc(
         cpc_model,
@@ -265,8 +277,10 @@ if __name__ == "__main__":
         args.PATH_TRAIN_DATA_CER = sys.argv[1]
         args.PATH_VAL_DATA_CER = sys.argv[2]
         args.PATH_TEST_DATA_CER = sys.argv[3]
+        args.VAL_DF = sys.argv[4]
+        
     
-    set_seed(args.SEED):
+    set_seed(args.SEED)
     
     dataloaders = create_dataloader(args.PATH_TRAIN_DATA_CER, 
                                     args.PATH_VAL_DATA_CER, 
