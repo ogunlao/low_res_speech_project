@@ -16,9 +16,9 @@ import string
 import re
 import shutil
 
-from .utils import make_dirs
-from .utils import args_preproc as args
-from .utils import args_ctc
+from utils import make_dirs
+from utils import args_preproc as args
+from utils import args_ctc
 import progressbar
 from ctcdecode import CTCBeamDecoder
 
