@@ -17,7 +17,7 @@ args_ctc = Namespace(
     SEED = 0,
     FREEZE_ENCODER=False,
     DROPOUT=0.2,
-    WARMUP_PERIOD=20,
+    WARMUP_PERIOD=100,
     
     VAL_DF = None,
     PRINT_SAMPLE_PS = True,
