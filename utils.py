@@ -44,7 +44,7 @@ args_ctc = Namespace(
     MIN_LR = 0.0,
     LEARNING_RATE = 1e-4, # set starting lr
     OPTIMIZER=torch.optim.Adam,
-    SCHEDULER=torch.optim.lr_scheduler.CosineAnnealingLR,
+    SCHEDULER=torch.optim.lr_scheduler.ReduceLROnPlateau,
     WEIGHT_DECAY = 0.000,
     BEAM_WIDTH=1, # for beam search, set to 1 since we are using max_decoding
     

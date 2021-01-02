@@ -44,7 +44,8 @@ def train_one_epoch_ctc(cpc_model,
                         character_classifier, 
                         loss_criterion, 
                         data_loader, 
-                        optimizer):
+                        optimizer,
+                        lr_sch, warmup_scheduler):
   
   cpc_model.train()
   loss_criterion.train()
@@ -71,6 +72,9 @@ def train_one_epoch_ctc(cpc_model,
     loss = loss_criterion(scores, y.to(device), yhat_len, y_len)
     loss.backward()
     optimizer.step()
+    lr_sch.step(epoch)
+    warmup_scheduler.dampen()
+    
     avg_loss+=loss.item()*bs
     n_items+=bs
   avg_loss/=n_items
@@ -131,7 +135,7 @@ def run_ctc(cpc_model, character_classifier,
       for epoch in range(n_epoch):
 
         print(f"Running epoch {epoch+1} / {n_epoch}")
-        loss_train = train_one_epoch_ctc(cpc_model, character_classifier, loss_criterion, data_loader_train, optimizer)
+        loss_train = train_one_epoch_ctc(cpc_model, character_classifier, loss_criterion, data_loader_train, optimizer, lr_sch, warmup_scheduler)
         losses_train.append(loss_train)
         print("-------------------")
         print(f"Training dataset :")
@@ -141,8 +145,8 @@ def run_ctc(cpc_model, character_classifier,
         print("Validation dataset")
         loss_val = validation_step(cpc_model, character_classifier, loss_criterion, data_loader_val)
         losses_val.append(loss_val)
-        lr_sch.step(epoch)
-        warmup_scheduler.dampen()
+        # lr_sch.step(epoch)
+        # warmup_scheduler.dampen()
         # print(optimizer.param_groups[0]['lr'])
 
         if loss_val < min_loss:
@@ -252,14 +256,15 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     optimizer = optim(parameters, lr=args.LEARNING_RATE)#, weight_decay=args.WEIGHT_DECAY,)
     
     sched = args.SCHEDULER
-    lr_sch = sched(optimizer, T_max=args.N_EPOCH, eta_min=args.MIN_LR)
-    warmup_scheduler = warmup.ExponentialWarmup(optimizer, warmup_period=args.WARMUP_PERIOD)
+    T_max = args.N_EPOCH*len(dataloaders['train'])
+    lr_sch = sched(optimizer, T_max=T_max, eta_min=args.MIN_LR)
+    warmup_scheduler = warmup.LinearWarmup(optimizer, warmup_period=args.WARMUP_PERIOD)
     warmup_scheduler.last_step = -1 # initialize the step counter
 
     loss_ctc = torch.nn.CTCLoss()
     
     data_loader_train_letters = dataloaders['train']
-    data_loader_val_letters = dataloaders['val'get_pseudolabels]
+    data_loader_val_letters = dataloaders['val']
     
     losses_train, losses_val, cpc_model, character_classifier = run_ctc(
         cpc_model,
