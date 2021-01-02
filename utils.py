@@ -17,7 +17,7 @@ args_ctc = Namespace(
     SEED = 0,
     FREEZE_ENCODER=False,
     DROPOUT=0.2,
-    WARMUP_PERIOD=100,
+    WARMUP_PERIOD=2000,
     
     VAL_DF = None,
     PRINT_SAMPLE_PS = True,
@@ -39,12 +39,12 @@ args_ctc = Namespace(
 
     # training parameters
     PATIENCE=10, # early stopping limit
-    N_EPOCH=300,
+    N_EPOCH=150,
     CHECKPOINT_PATH = 'checkpoint_data/checkpoint_30.pt',
     MIN_LR = 0.0,
     LEARNING_RATE = 1e-4, # set starting lr
     OPTIMIZER=torch.optim.Adam,
-    SCHEDULER=torch.optim.lr_scheduler.ReduceLROnPlateau,
+    SCHEDULER=torch.optim.lr_scheduler.CosineAnnealingLR,
     WEIGHT_DECAY = 0.000,
     BEAM_WIDTH=1, # for beam search, set to 1 since we are using max_decoding
     

@@ -274,7 +274,7 @@ def get_pseudolabels(df, data_dataloader,
 
             if args.PRINT_SAMPLE_PS and index == 0:
                 for i in range(4):
-                    print('Actual label:', df.iloc[i].sentence)
+                    print('Actual label:', clean_sentence(df.iloc[i].sentence))
                     print('Pseudolabel:', transcripts[i])
                 return
 

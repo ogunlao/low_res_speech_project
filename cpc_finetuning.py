@@ -20,7 +20,7 @@ import pytorch_warmup as warmup
 import random
 import numpy as np
 import pandas as pd
-from .preprocess import get_pseudolabels
+from preprocess import get_pseudolabels
 
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
@@ -45,7 +45,8 @@ def train_one_epoch_ctc(cpc_model,
                         loss_criterion, 
                         data_loader, 
                         optimizer,
-                        lr_sch, warmup_scheduler):
+                        lr_sch, warmup_scheduler, 
+                        epoch):
   
   cpc_model.train()
   loss_criterion.train()
@@ -97,7 +98,7 @@ def validation_step(cpc_model,
     for step, full_data in enumerate(data_loader):
       
       if args.VAL_DF and step == 0:        
-          get_pseudolabels(val_df, dataloader, cpc_model, character_classifier, args)
+          get_pseudolabels(val_df, data_loader, cpc_model, character_classifier, args)
         
       x, x_len, y, y_len = full_data
 
@@ -135,7 +136,10 @@ def run_ctc(cpc_model, character_classifier,
       for epoch in range(n_epoch):
 
         print(f"Running epoch {epoch+1} / {n_epoch}")
-        loss_train = train_one_epoch_ctc(cpc_model, character_classifier, loss_criterion, data_loader_train, optimizer, lr_sch, warmup_scheduler)
+        loss_train = train_one_epoch_ctc(cpc_model, character_classifier, 
+                                         loss_criterion, data_loader_train, 
+                                         optimizer, lr_sch, warmup_scheduler,
+                                         epoch)
         losses_train.append(loss_train)
         print("-------------------")
         print(f"Training dataset :")
