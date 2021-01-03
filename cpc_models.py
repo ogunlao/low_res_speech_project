@@ -21,7 +21,7 @@ class CharacterClassifier(torch.nn.Module):
                drop_p=args.DROPOUT):
     super(CharacterClassifier, self).__init__()
     self.linear = torch.nn.Linear(input_dim, n_characters)
-    self.dropout = torch.nn.Dropout(p=drop_p)
+    # self.dropout = torch.nn.Dropout(p=drop_p)
     
   def forward(self, x):
-    return self.linear(self.dropout(x))
+    return self.linear(x)

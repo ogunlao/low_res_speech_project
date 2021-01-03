@@ -49,8 +49,9 @@ def train_one_epoch_ctc(cpc_model,
                         epoch):
   
   cpc_model.train()
+  character_classifier.train()
   loss_criterion.train()
-
+  
   avg_loss = 0
   avg_accuracy = 0
   n_items = 0
@@ -73,8 +74,9 @@ def train_one_epoch_ctc(cpc_model,
     loss = loss_criterion(scores, y.to(device), yhat_len, y_len)
     loss.backward()
     optimizer.step()
-    lr_sch.step(epoch)
+    lr_sch.step(lr_sch.last_epoch+1)
     warmup_scheduler.dampen()
+    # print(optimizer.param_groups[0]['lr'])
     
     avg_loss+=loss.item()*bs
     n_items+=bs
@@ -136,6 +138,7 @@ def run_ctc(cpc_model, character_classifier,
       for epoch in range(n_epoch):
 
         print(f"Running epoch {epoch+1} / {n_epoch}")
+        
         loss_train = train_one_epoch_ctc(cpc_model, character_classifier, 
                                          loss_criterion, data_loader_train, 
                                          optimizer, lr_sch, warmup_scheduler,
