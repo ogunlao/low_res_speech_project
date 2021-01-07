@@ -4,6 +4,7 @@ import shutil
 import time
 import datetime
 import numpy as np
+import os
 import progressbar
 from multiprocessing import Pool
 
