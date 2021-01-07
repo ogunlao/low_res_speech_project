@@ -265,9 +265,7 @@ def create_model(args):
   cpc_model = cpc_model.cuda()
   HIDDEN_CONTEXT_MODEL = 256
   character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
-  
-  
-  
+    
   return cpc_model, character_classifier
 
 def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
