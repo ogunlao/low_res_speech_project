@@ -15,10 +15,15 @@ from unicodedata import normalize
 import string
 import re
 import shutil
-
-from .utils import make_dirs
-from .utils import args_preproc as args
-from .utils import args_ctc
+try:
+    from utils import make_dirs
+    from utils import args_preproc as args
+    from utils import args_ctc
+except:
+    from .utils import make_dirs
+    from .utils import args_preproc as args
+    from .utils import args_ctc
+    
 import progressbar
 from ctcdecode import CTCBeamDecoder
 
@@ -283,3 +288,4 @@ def get_pseudolabels(df, data_dataloader,
     df['pseudolabels'] = all_transcriptions
     bar.finish()
     return df
+

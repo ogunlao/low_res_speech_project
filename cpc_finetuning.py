@@ -6,13 +6,18 @@ import datetime
 import numpy as np
 import progressbar
 from multiprocessing import Pool
-from utils import args_ctc as args
+
+try:
+  from utils import args_ctc as args
+  from utils import make_dirs
+except:
+  from .utils import args_ctc as args
+  from .utils import make_dirs
 import wget
 import sys
 
 from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
 from cpc.feature_loader import loadModel
-from utils import make_dirs
 from cpc_models import CharacterClassifier
 from cpc_eval import get_cer
 import pytorch_warmup as warmup
@@ -269,7 +274,7 @@ def create_model(args):
   return cpc_model, character_classifier
 
 def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
-    download_ckpt(ckpt_path="checkpoint_data")
+    # download_ckpt(ckpt_path="checkpoint_data")
     
     
     letters_labels, N_LETTERS = parseSeqLabels(args.PATH_LETTER_DATA_CER)
