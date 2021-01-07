@@ -242,7 +242,34 @@ def create_dataloader(train_data_path, val_data_path, test_data_path, args=args)
     return {'train': data_loader_train_letters,
             'val': data_loader_val_letters,
             'test': data_loader_test_letters}
-    
+
+def create_model(args):
+  
+  import torch
+  import argparse
+
+  checkpoint_url = 'https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/60k_epoch4-d0f474de.pt'
+  checkpoint = torch.hub.load_state_dict_from_url(checkpoint_url,progress=False, map_location='cpu')
+
+  from cpc.model import CPCModel as cpcmodel
+  from cpc.cpc_default_config import get_default_cpc_config
+  from cpc.feature_loader import getEncoder, getAR, loadArgs
+  locArgs = get_default_cpc_config()
+
+  loadArgs(locArgs, argparse.Namespace(**checkpoint["config"]))
+  encoderNet = getEncoder(locArgs)
+  arNet_context = getAR(locArgs)
+  cpc_model = cpcmodel(encoderNet, arNet_context)
+
+  cpc_model.load_state_dict(checkpoint['weights'])
+  cpc_model = cpc_model.cuda()
+  HIDDEN_CONTEXT_MODEL = 256
+  character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
+  
+  
+  
+  return cpc_model, character_classifier
+
 def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     download_ckpt(ckpt_path="checkpoint_data")
     
@@ -251,9 +278,11 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     args.N_LETTERS=N_LETTERS # +1 for the blank token
     
     # Load model
-    cpc_model, HIDDEN_CONTEXT_MODEL, HIDDEN_ENCODER_MODEL = loadModel([args.CHECKPOINT_PATH])
-    cpc_model = cpc_model.to(device)
-    character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
+    # cpc_model, HIDDEN_CONTEXT_MODEL, HIDDEN_ENCODER_MODEL = loadModel([args.CHECKPOINT_PATH])
+    # cpc_model = cpc_model.to(device)
+    # character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
+    
+    cpc_model, character_classifier = create_model(args)
     if args.FREEZE_ENCODER:
       parameters = character_classifier.parameters()
     else:
