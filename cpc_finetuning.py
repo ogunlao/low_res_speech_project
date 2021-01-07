@@ -18,15 +18,25 @@ import sys
 
 from cpc.eval.common_voices_eval import SingleSequenceDataset, parseSeqLabels, findAllSeqs
 from cpc.feature_loader import loadModel
-from cpc_models import CharacterClassifier
-from cpc_eval import get_cer
+try:
+  from cpc_models import CharacterClassifier
+except:
+  from .cpc_models import CharacterClassifier
+
+try:
+  from cpc_eval import get_cer
+except:
+  from .cpc_eval import get_cer
 import pytorch_warmup as warmup
 
 import random
 import numpy as np
 import pandas as pd
-from preprocess import get_pseudolabels
 
+try:
+  from preprocess import get_pseudolabels
+except:
+  from preprocess import get_pseudolabels
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 

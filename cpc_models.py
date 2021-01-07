@@ -1,5 +1,8 @@
 import torch
-from utils import args_ctc as args
+try:
+  from utils import args_ctc as args
+except:
+  from .utils import args_ctc as args
 
 class CPCModel(torch.nn.Module):
     def __init__(self, encoder, AR):

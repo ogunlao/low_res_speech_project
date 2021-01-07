@@ -2,7 +2,10 @@ import numpy as np
 import progressbar
 from multiprocessing import Pool
 from ctcdecode import CTCBeamDecoder
-from utils import args_ctc as args
+try:
+  from utils import args_ctc as args
+except:
+  from .utils import args_ctc as args
 import time
 import torch
 
