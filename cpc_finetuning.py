@@ -36,7 +36,7 @@ import pandas as pd
 try:
   from preprocess import get_pseudolabels
 except:
-  from preprocess import get_pseudolabels
+  from .preprocess import get_pseudolabels
 
 device = torch.device("cuda:0" if args.DEVICE else "cpu")
 
@@ -258,7 +258,7 @@ def create_dataloader(train_data_path, val_data_path, test_data_path, args=args)
             'val': data_loader_val_letters,
             'test': data_loader_test_letters}
 
-def create_model(args):
+def create_model(args, ):
   
   import torch
   import argparse

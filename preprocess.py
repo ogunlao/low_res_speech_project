@@ -82,7 +82,7 @@ def get_samples(data_dict,
                 audio_src_path,
                 wav_sav_path,
                 seed=args.SEED, 
-                shuffle=args.SHUFFLE_SAMPLES,):
+                shuffle=args.SHUFFLE_SAMPLES):
     r"""
     Generate different samples for training from the same dataser. Also, subsamples the audio data and convert file format
     max_samples: Max duration of different splits in the same dataset
