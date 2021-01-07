@@ -214,13 +214,17 @@ def load_checkpoint(model, classifier, path=args.CHECKPOINT_SAVE_PATH):
   return model, classifier
 
 
-def save_final_checkpoint(path=args.CHECKPOINT_SAVE_PATH, args=args):
+def save_final_checkpoint(path=args.CHECKPOINT_SAVE_PATH,
+                          model_name='', args=args):
   make_dirs(args.FINAL_MODEL_SAVE_PATH)
 
   pid=os.getpid()
   dt=datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-  save_model_as = 'cpc_checkpoint_ps_'+str(dt)+str(pid)+'.ckpt'
+  if not model_name:
+    save_model_as = 'cpc_checkpoint_ps_'+str(dt)+str(pid)+'.ckpt'
+  else:
+    save_model_as = model_name
   shutil.copy2(args.CHECKPOINT_SAVE_PATH, os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as))
   shutil.copy2(args.CHECKPOINT_SAVE_PATH+".classifier", os.path.join(args.FINAL_MODEL_SAVE_PATH, save_model_as+".classifier"))
 
