@@ -36,7 +36,7 @@ args_ctc = Namespace(
     SEED = 0,
     FREEZE_ENCODER=False,
     DROPOUT=0.2,
-    WARMUP_PERIOD=2000,
+    WARMUP_PERIOD=1000,
     
     VAL_DF = None,
     PRINT_SAMPLE_PS = True,
@@ -61,7 +61,7 @@ args_ctc = Namespace(
     N_EPOCH=150,
     CHECKPOINT_PATH = 'checkpoint_data/checkpoint_30.pt',
     MIN_LR = 0.0,
-    LEARNING_RATE = 1e-4, # set starting lr
+    LEARNING_RATE = 1e-3, # set starting lr
     OPTIMIZER=torch.optim.Adam,
     SCHEDULER=torch.optim.lr_scheduler.CosineAnnealingLR,
     WEIGHT_DECAY = 0.000,

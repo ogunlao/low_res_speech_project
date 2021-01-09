@@ -77,7 +77,7 @@ def convert_to_wav(mp3_file,
 
     return mp3_file[:-4] + '.wav'
 
-
+        
 def get_samples(data_dict,
                 audio_src_path,
                 wav_sav_path,
@@ -115,7 +115,10 @@ def get_samples(data_dict,
         df = df.copy()
         df['duration'] = 0.0
 
-        start_idx = 0
+        # start_idx = 0
+        columns = list(df.columns.values)+['duration']
+
+        data_idx = []
         for sample_idx in range(len(max_samples)):
             total = 0.0
             max_duration = max_samples[sample_idx]*3600
@@ -123,42 +126,61 @@ def get_samples(data_dict,
             sav_path = os.path.join(wav_sav_path, data_split, str(sample_idx))
             make_dirs(sav_path)
             
-            for i in range(start_idx, len(df)):
-                mp3_file = df.iloc[i].path
+            
+            #all_client_id = set(df.client_id.values)
+            all_samples = set()
+
+            
+            new_df = pd.DataFrame(columns=columns)
+            row_list = []
+            # durations = []
+
+            while total < max_duration:
+                client_ids_for_1_pass = set()
                 
-                # convert to wav file from mp3
-                wav_file = convert_to_wav(mp3_file=mp3_file,
-                                            src_path=audio_src_path, 
-                                            dest_path=sav_path,
-                                            dest_frame_rate=16000)
+                for i, data in df.iterrows():
+                    # if i in data_idx: continue
+                    if data.client_id in client_ids_for_1_pass:
+                        continue
+                    
+                    mp3_file = data.path
 
-                # calculate duration of wav file
-                audio_path = os.path.join(sav_path, wav_file)
-                duration = librosa.core.get_duration(filename=audio_path)
+                    # convert to wav file from mp3
+                    wav_file = convert_to_wav(mp3_file=mp3_file,
+                                                src_path=audio_src_path, 
+                                                dest_path=sav_path,
+                                                dest_frame_rate=16000)
+                    
+                    # calculate duration of wav file
+                    audio_path = os.path.join(sav_path, wav_file)
+                    duration = librosa.core.get_duration(filename=audio_path)
 
-                df.at[i, 'path'] = wav_file
-                df.at[i, 'duration'] = float(duration)
+                    data['path'] = wav_file
+                    data['duration'] = float(duration)
+                    
+                    row_list.append(data)
+                    data_idx.append(i)
+                    client_ids_for_1_pass.add(data.client_id)
+                    
+                    total+=duration
 
-                total+=duration
-                # if i%1000 == 0:
-                #   print("Now at", i)
-
-                if total >= max_duration:
-                    temp_df = df[start_idx: i+1]
+                    if total >= max_duration:
+                        temp_df = pd.DataFrame(row_list, columns=columns)
+                            
+                        df_save_path = os.path.join(os.getcwd(),  
+                                                    data_split + str(total//3600) + 'hrs_' + str(sample_idx)+'.csv')
                         
-                    df_save_path = os.path.join(os.getcwd(),  
-                                                data_split + str(total//3600) + 'hrs_' + str(sample_idx)+'.csv')
-                    
-                    temp_df.to_csv(df_save_path, index=False)
-                    start_idx = i+1
-                    
-                    print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path} and audio saved in {sav_path}')
-                    total = 0.0
-                    break
+                        temp_df.to_csv(df_save_path, index=False)
+                        # start_idx = i+1
+                        
+                        print(f'finished sampling for {total/3600} hrs, csv file saved in {df_save_path} and audio saved in {sav_path}')
+                        
+                        break
+                df = df.drop(index=data_idx)
+                data_idx = []
 
         print(f'Code for {data_split} finished in {time.time() - t0} seconds')
         
-
 def clean_sentence(sentence):
     """function to clean text, remove punctuations and normalize text """
     # prepare regex for char filtering
@@ -189,6 +211,11 @@ def convert_text_to_index(df,
                           character_to_index, 
                           audio_path, file_name, 
                           dest_path='', max_sec=None, use_pseudolabel=False):
+    
+    if os.path.isfile(file_name):
+        print("File already exists, delete old file to continue")
+        return
+    
     if max_sec:
         make_dirs(dest_path)
 
