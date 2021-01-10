@@ -211,11 +211,7 @@ def convert_text_to_index(df,
                           character_to_index, 
                           audio_path, file_name, 
                           dest_path='', max_sec=None, use_pseudolabel=False):
-    
-    if os.path.isfile(file_name):
-        print("File already exists, delete old file to continue")
-        return
-    
+        
     if max_sec:
         make_dirs(dest_path)
 
