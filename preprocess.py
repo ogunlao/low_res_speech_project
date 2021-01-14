@@ -334,12 +334,16 @@ def resample_audio_duration_wav(df, df_name, src_path,
       # convert mp3 to wav                                                            
       sound = am.from_mp3(src)
       sound = sound.set_frame_rate(dest_frame_rate)
+      
+      # calculate duration of wav file
+      duration = sound.duration_seconds
+      
       sound.export(dst, format="wav")
 
       wav_file = mp3_file[:-4]+'.wav'
 
-      # calculate duration of wav file
-      duration = librosa.core.get_duration(filename=dst)
+      
+      #duration = librosa.core.get_duration(filename=dst)
 
       df.at[i, 'path'] = wav_file
       df.at[i, 'duration'] = float(duration)
@@ -359,15 +363,20 @@ if __name__ == '__main__':
     val_df = pd.read_csv(os.path.join(audio_dir, "dev.tsv"), sep='\t')
     test_df = pd.read_csv(os.path.join(audio_dir, "test.tsv"), sep='\t')
     
+    total_train = len(train_df)
+    train_df1 = train_df[:total_train].copy()
+    train_df2 = train_df[total_train:].copy()
+    
     df_dict = {
-    'train_res_df': train_df,
+    'train_res_df1': train_df1,
+    'train_res_df2': train_df2,
     'val_res_df': val_df,
     'test_res_df': test_df
     }
     
     for df_name in df_dict:
         p = multiprocessing.Process(target=resample_audio_duration_wav,
-                                    args=(df_dict['df_name'], df_name, 
+                                    args=(df_dict[df_name], df_name, 
                                           "/content/cv-corpus-6.1-2020-12-11/rw/clips/",
                                             "content/clips_16k/", 16000,))
 
