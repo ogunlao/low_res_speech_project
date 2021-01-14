@@ -76,9 +76,13 @@ def convert_to_wav(mp3_file,
     # convert mp3 to wav                                                            
     sound = am.from_mp3(src)
     sound = sound.set_frame_rate(dest_frame_rate)
+    
+    # calculate duration of wav file
+    duration = sound.duration_seconds
+    
     sound.export(dst, format="wav")
 
-    return mp3_file[:-4] + '.wav'
+    return mp3_file[:-4] + '.wav', duration
 
         
 def get_samples(data_dict,
@@ -149,14 +153,14 @@ def get_samples(data_dict,
                     mp3_file = data.path
 
                     # convert to wav file from mp3
-                    wav_file = convert_to_wav(mp3_file=mp3_file,
+                    wav_file, duration = convert_to_wav(mp3_file=mp3_file,
                                                 src_path=audio_src_path, 
                                                 dest_path=sav_path,
                                                 dest_frame_rate=16000)
                     
                     # calculate duration of wav file
                     audio_path = os.path.join(sav_path, wav_file)
-                    duration = librosa.core.get_duration(filename=audio_path)
+                    # duration = librosa.core.get_duration(filename=audio_path)
 
                     data['path'] = wav_file
                     data['duration'] = float(duration)
@@ -363,9 +367,10 @@ if __name__ == '__main__':
     val_df = pd.read_csv(os.path.join(audio_dir, "dev.tsv"), sep='\t')
     test_df = pd.read_csv(os.path.join(audio_dir, "test.tsv"), sep='\t')
     
-    total_train = len(train_df)
-    train_df1 = train_df[:total_train].copy()
-    train_df2 = train_df[total_train:].copy()
+    # split large train set for multiple processes
+    part_train = len(train_df)//2
+    train_df1 = train_df[:part_train].copy()
+    train_df2 = train_df[part_train:].copy()
     
     df_dict = {
     'train_res_df1': train_df1,
@@ -385,6 +390,13 @@ if __name__ == '__main__':
         
     for process in processes:
         process.join()
-        
+    
+    # combine splitted train set
+    train1 = pd.read_csv('train_res_df1.csv')
+    train2 = pd.read_csv('train_res_df2.csv')
+
+    train_res_df = pd.concat([train1, train2]).reset_index(drop=True)
+    train_res_df.to_csv('train_res_df.csv', index=False)
+    
     print('That took {} seconds'.format(time.time() - starttime))
 
