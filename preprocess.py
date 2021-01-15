@@ -401,8 +401,8 @@ if __name__ == '__main__':
     
     # split large train set for multiple processes
     idx = len(train_df)//16
-    train_df1 = train_df[:idx]
-    train_df2 = train_df[idx:2*idx]
+    # train_df1 = train_df[:idx]
+    # train_df2 = train_df[idx:2*idx]
     # train_df3 = train_df[2*idx:3*idx]
     # train_df4 = train_df[3*idx:4*idx]
     # train_df5 = train_df[4*idx:5*idx]
@@ -427,7 +427,7 @@ if __name__ == '__main__':
     }
     
     for df_name in df_dict:
-        p = multiprocessing.Process(target=resample_audio_duration_wav,
+        p = multiprocessing.Process(target=get_audio_duration,
                                     args=(df_dict[df_name], df_name, 
                                           "/content/cv-corpus-6.1-2020-12-11/rw/clips/",
                                             "content/clips_16k/", 16000,))
