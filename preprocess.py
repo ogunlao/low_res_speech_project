@@ -367,16 +367,33 @@ if __name__ == '__main__':
     val_df = pd.read_csv(os.path.join(audio_dir, "dev.tsv"), sep='\t')
     test_df = pd.read_csv(os.path.join(audio_dir, "test.tsv"), sep='\t')
     
+    train_df = train_df[train_df['gender'].notnull()]
+    
     # split large train set for multiple processes
-    part_train = len(train_df)//2
-    train_df1 = train_df[:part_train].copy()
-    train_df2 = train_df[part_train:].copy()
+    idx = len(train_df)//16
+    train_df1 = train_df[:idx]
+    train_df2 = train_df[idx:2*idx]
+    # train_df3 = train_df[2*idx:3*idx]
+    # train_df4 = train_df[3*idx:4*idx]
+    # train_df5 = train_df[4*idx:5*idx]
+    # train_df6 = train_df[5*idx:6*idx]
+    # train_df7 = train_df[6*idx:7*idx]
+    # train_df8 = train_df[7*idx:8*idx]
+    # train_df9 = train_df[8*idx:9*idx]
+    # train_df10 = train_df[9*idx:10*idx]
+    # train_df11 = train_df[10*idx:11*idx]
+    # train_df12 = train_df[11*idx:12*idx]
+    # train_df13 = train_df[12*idx:13*idx]
+    # train_df14 = train_df[13*idx:14*idx]
+    # train_df15 = train_df[14*idx:15*idx]
+    # train_df16 = train_df[15*idx: ]
+    
     
     df_dict = {
     'train_res_df1': train_df1,
     'train_res_df2': train_df2,
-    'val_res_df': val_df,
-    'test_res_df': test_df
+    # 'val_res_df': val_df,
+    # 'test_res_df': test_df
     }
     
     for df_name in df_dict:
@@ -390,13 +407,6 @@ if __name__ == '__main__':
         
     for process in processes:
         process.join()
-    
-    # combine splitted train set
-    train1 = pd.read_csv('train_res_df1.csv')
-    train2 = pd.read_csv('train_res_df2.csv')
-
-    train_res_df = pd.concat([train1, train2]).reset_index(drop=True)
-    train_res_df.to_csv('train_res_df.csv', index=False)
     
     print('That took {} seconds'.format(time.time() - starttime))
 
