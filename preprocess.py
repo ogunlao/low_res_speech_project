@@ -327,7 +327,7 @@ def resample_audio_duration_wav(df, df_name, src_path,
 
     t0 = time.time()
 
-    df = df.copy()
+    df = df.reset_index(drop=True).copy()
     df['duration'] = 0.0
 
     for i in range(len(df)):
@@ -351,6 +351,36 @@ def resample_audio_duration_wav(df, df_name, src_path,
 
       df.at[i, 'path'] = wav_file
       df.at[i, 'duration'] = float(duration)
+    df.to_csv(df_name+'.csv', index=False)
+
+    print(f'Resampling for {df_name} finished in {time.time() - t0} seconds')
+
+def get_audio_duration(df, df_name, src_path, 
+                   dest_path='content/clips_16k/',
+                   dest_frame_rate=16000):
+  
+    make_dirs(dest_path)
+
+    t0 = time.time()
+
+    df = df.reset_index(drop=True).copy()
+    df['duration'] = 0.0
+
+    durations = []
+    for i in range(len(df)):
+      mp3_file = df.iloc[i].path
+      src = os.path.join(src_path, mp3_file)
+      
+      # convert mp3 to wav                                                            
+      sound = am.from_mp3(src)
+            
+      # calculate duration of wav file
+      duration = sound.duration_seconds
+      
+      #duration = librosa.core.get_duration(filename=dst)
+      durations.append(float(duration))
+      # df.at[i, 'duration'] = float(duration)
+    df['duration'] = durations
     df.to_csv(df_name+'.csv', index=False)
 
     print(f'Resampling for {df_name} finished in {time.time() - t0} seconds')
