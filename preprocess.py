@@ -224,21 +224,25 @@ def convert_text_to_index(df,
 
     total_sec = 0.0
     with open(file_name, "a+") as all_session_text:
-        for i in range(len(df)):
-            wav_name = df.iloc[i]['path']
+        for i, data in df.iterrows():
+            wav_name = data['path']
             wav_path = os.path.join(audio_path, wav_name)
 
             if use_pseudolabel:
-                sentence = df.iloc[i]['pseudolabels']
+                sentence = data['pseudolabels']
             else:
-                sentence = clean_sentence(df.iloc[i]['sentence'])
+                sentence = clean_sentence(data['sentence'])
             
+            if len(sentence) == 0:
+                print(f'Need to delete <{wav_name}> from dir. Length of sentence is < 1')
+                continue
+                
             indices = ''
             for c in sentence: 
                 indices+=str(character_to_index[c.lower()]) + ' ' 
             #wav_name[:-4] to remove the extension   
             all_session_text.writelines(wav_name[:-4] + ' ' + indices + '\n')
-            total_sec += df.iloc[i].duration
+            total_sec += data.duration
 
             if max_sec: # move to new path if subsampling
               shutil.copy2(wav_path, dest_path)
