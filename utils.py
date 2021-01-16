@@ -69,9 +69,9 @@ args_ctc = Namespace(
     
 
     # dataloader parameters
-    PATH_TRAIN_DATA_CER = "content/clips_16k/train_sample/",
-    PATH_VAL_DATA_CER = "content/clips_16k/val/0",
-    PATH_TEST_DATA_CER = "content/clips_16k/test/0",
+    PATH_TRAIN_DATA_CER = "content/clips_16k/",
+    PATH_VAL_DATA_CER = "content/val/",
+    PATH_TEST_DATA_CER = "content/test",
     PATH_LETTER_DATA_CER = 'content/char_to_labels.txt',
     PATH_PSEUDOLABEL_DATA_CER = 'content/char_to_labels_ps.txt',
 
@@ -79,9 +79,9 @@ args_ctc = Namespace(
     VAL_BATCH_SIZE = 8,
     MAX_TRAINING_DURATION = 2*60*60, # change between 2, 10 and 20 hrs
 
-    AUDIO_PATH_TRAIN="content/clips_16k/train/0",
-    AUDIO_PATH_DEV = "content/clips_16k/val/0",
-    AUDIO_PATH_TEST = "content/clips_16k/test/0",
+    AUDIO_PATH_TRAIN="content/clips_16k",
+    AUDIO_PATH_DEV = "content/val/",
+    AUDIO_PATH_TEST = "content/test/",
 
     FINAL_MODEL_SAVE_PATH = '/content/drive/My Drive/Colab Notebooks/data/fr/',
     CHECKPOINT_SAVE_PATH = "/content/checkpoint.ckpt",

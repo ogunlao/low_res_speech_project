@@ -385,6 +385,89 @@ def get_audio_duration(df, df_name, src_path,
 
     print(f'Resampling for {df_name} finished in {time.time() - t0} seconds')
 
+def resample_audio_for_training(df_main, src_path, 
+                   max_duration,
+                   dest_path='content/clips_16k/',
+                   duration_len = [3.0, 4.0],
+                   dest_frame_rate=16000,
+                   shuffle=True,
+                   seed=0):
+    ''' Splits data into two genders, resample data and selects only data greater than {max_duration}
+    '''
+    make_dirs(dest_path)
+
+    t0 = time.time()
+
+    # split data along genders
+    genders = ['male', 'female']
+    df_dict = {}
+    for gender in genders:
+      df_dict[gender] = df_main[df_main.gender == gender]
+
+    split_duration = max_duration/len(genders)
+    total_split_duration = 0.0
+    #df = df.reset_index(drop=True).copy()
+
+    data_array = []
+    columns = list(df_main.columns.values)
+    for gender in df_dict:
+      df = df_dict[gender]
+      if shuffle:
+        df = df.sample(frac=1, random_state=seed).reset_index(drop=True)
+      
+      for i, data in df.iterrows():
+        if duration_len[0] < data.duration < duration_len[1]:
+          mp3_file = data.path
+          src = os.path.join(src_path, mp3_file)
+
+          wav_file = mp3_file[:-4]+'.wav'
+          dst = os.path.join(dest_path, wav_file)
+
+          # convert mp3 to wav                                                            
+          sound = am.from_mp3(src)
+          sound = sound.set_frame_rate(dest_frame_rate)
+          
+          sound.export(dst, format="wav")
+
+          data.path = wav_file
+          data_array.append(data)
+
+          total_split_duration+=data.duration
+        
+        if total_split_duration >= split_duration: 
+          total_split_duration = 0.0
+          break
+      
+    temp_df = pd.DataFrame(data_array, columns=columns)
+    temp_df['path'] = temp_df['path'].apply(lambda x: x[:-4]+'.wav')
+    # temp_df.to_csv(df_name+'.csv', index=False)
+
+    print(f'Resampling for {temp_df.duration.sum()} secs finished in {time.time() - t0} seconds')
+
+    return temp_df
+
+def copy_data(df, src_path, dst_path, max_duration=5*3600, shuffle=True):
+
+  make_dirs(dst_path)
+  if shuffle:
+    df = df.sample(frac=1, random_state=0).reset_index(drop=True)
+  
+
+  total_duration = 0.0
+  data_array = []
+  columns = list(df.columns.values)
+  for index, data in df.iterrows():
+    shutil.copy(os.path.join(src_path, data.path), dst_path)
+
+    data_array.append(data)
+
+    total_duration+=data.duration
+    
+    if total_duration >= max_duration:
+      break
+  temp_df = pd.DataFrame(data_array, columns=columns)
+  return temp_df
+
 if __name__ == '__main__':
     
     starttime = time.time()
