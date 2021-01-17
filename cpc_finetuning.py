@@ -301,6 +301,13 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     # character_classifier = CharacterClassifier(HIDDEN_CONTEXT_MODEL, args.N_LETTERS).to(device)
     
     cpc_model, character_classifier = create_model(args)
+    
+    # ckpt_path = "/content/drive/MyDrive/Colab Notebooks/data/rw/2hr/rw_checkpoint_5hrs_ps.ckpt"
+    # print('path to model:', ckpt_path)
+
+    # cpc_model, character_classifier = load_checkpoint(cpc_model, character_classifier,
+    #                                               path=ckpt_path)
+    
     if args.FREEZE_ENCODER:
       parameters = character_classifier.parameters()
     else:

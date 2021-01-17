@@ -234,7 +234,12 @@ def convert_text_to_index(df,
                 sentence = clean_sentence(data['sentence'])
             
             if len(sentence) == 0:
-                print(f'Need to delete <{wav_name}> from dir. Length of sentence is < 1')
+                try:
+                    os.remove(wav_path)
+                    print(f'deleted <{wav_name}> from dir. Length of sentence is < 1')
+                except: 
+                    print(f'You need to delete <{wav_name}> from dir. Length of sentence is < 1')
+                    continue
                 continue
                 
             indices = ''
