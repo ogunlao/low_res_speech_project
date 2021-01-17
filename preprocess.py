@@ -455,7 +455,8 @@ def resample_audio_for_training(df_main, src_path,
 
     return temp_df
 
-def copy_data(df, src_path, dst_path, max_duration=5*3600, shuffle=True):
+
+def copy_data(df, src_path, dst_path, max_duration=5*3600, resample=False, shuffle=True):
 
   make_dirs(dst_path)
   if shuffle:
@@ -476,6 +477,27 @@ def copy_data(df, src_path, dst_path, max_duration=5*3600, shuffle=True):
       break
   temp_df = pd.DataFrame(data_array, columns=columns)
   return temp_df
+
+def get_audio_samples(df, src_path, 
+                   dest_path='content/clips_16k/',
+                   dest_frame_rate=16000):
+  
+    make_dirs(dest_path)
+
+    t0 = time.time()
+
+    for i, data in df.iterrows():
+      wav_file = data.path
+      src = os.path.join(src_path, wav_file[:-4]+'.mp3')
+      dst = os.path.join(dest_path, wav_file)
+
+      # convert mp3 to wav                                                            
+      sound = am.from_mp3(src)
+      sound = sound.set_frame_rate(dest_frame_rate)
+            
+      sound.export(dst, format="wav")
+
+    print(f'Resampling for finished in {time.time() - t0} seconds')
 
 if __name__ == '__main__':
     
