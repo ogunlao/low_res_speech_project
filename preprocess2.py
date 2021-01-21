@@ -505,7 +505,7 @@ if __name__ == '__main__':
 
     df = pd.read_csv(os.path.join(audio_dir, "train.csv"))
     
-    train_paths = list[df.path.values]
+    train_paths = list(df.path.values)
     
     for train_path in train_paths:
         p = threading.Thread(target=get_audio_samples,
