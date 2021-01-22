@@ -302,11 +302,12 @@ def finetune_ckpt(train_data_path, val_data_path, dataloaders, args=args):
     
     cpc_model, character_classifier = create_model(args)
     
-    # ckpt_path = "/content/drive/MyDrive/Colab Notebooks/data/rw/2hr/rw_checkpoint_5hrs_ps.ckpt"
-    # print('path to model:', ckpt_path)
+    if args.USE_PRETRAINED:
+      ckpt_path = "/content/drive/MyDrive/Colab Notebooks/data/rw/2hr/rw_checkpoint_5hrs_ps.ckpt"
+      print('Using pretrained model at:', ckpt_path)
 
-    # cpc_model, character_classifier = load_checkpoint(cpc_model, character_classifier,
-    #                                               path=ckpt_path)
+      cpc_model, character_classifier = load_checkpoint(cpc_model, character_classifier,
+                                                    path=ckpt_path)
     
     if args.FREEZE_ENCODER:
       parameters = character_classifier.parameters()

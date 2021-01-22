@@ -40,6 +40,7 @@ args_ctc = Namespace(
     
     VAL_DF = None,
     PRINT_SAMPLE_PS = True,
+    USE_PRETRAINED = False,
     
     # parameters for encoder/decoder CTC
     DIM_ENCODER=256,
@@ -57,7 +58,7 @@ args_ctc = Namespace(
     DEST_FRAME_RATE=16000,
 
     # training parameters
-    PATIENCE=10, # early stopping limit
+    PATIENCE=5, # early stopping limit
     N_EPOCH=150,
     CHECKPOINT_PATH = 'checkpoint_data/checkpoint_30.pt',
     MIN_LR = 0.0,
@@ -69,22 +70,22 @@ args_ctc = Namespace(
     
 
     # dataloader parameters
-    PATH_TRAIN_DATA_CER = "content/clips_16k/",
-    PATH_VAL_DATA_CER = "content/val/",
-    PATH_TEST_DATA_CER = "content/test",
-    PATH_LETTER_DATA_CER = 'content/char_to_labels.txt',
-    PATH_PSEUDOLABEL_DATA_CER = 'content/char_to_labels_ps.txt',
+    PATH_TRAIN_DATA_CER = "/home/ola/store/clips_16k/",
+    PATH_VAL_DATA_CER = "/home/ola/store/content/val/",
+    PATH_TEST_DATA_CER = "/home/ola/store/content/test",
+    PATH_LETTER_DATA_CER = '/home/ola/store/content/char_to_labels.txt',
+    PATH_PSEUDOLABEL_DATA_CER = '/home/ola/store/content/char_to_labels_ps.txt',
 
     TRAIN_BATCH_SIZE=16,
     VAL_BATCH_SIZE = 8,
     MAX_TRAINING_DURATION = 2*60*60, # change between 2, 10 and 20 hrs
 
-    AUDIO_PATH_TRAIN="content/clips_16k",
-    AUDIO_PATH_DEV = "content/val/",
-    AUDIO_PATH_TEST = "content/test/",
+    AUDIO_PATH_TRAIN="/home/ola/store/content/train_2h",
+    AUDIO_PATH_DEV = "/home/ola/store/content/val/",
+    AUDIO_PATH_TEST = "/home/ola/store/content/test/",
 
     FINAL_MODEL_SAVE_PATH = '/content/drive/My Drive/Colab Notebooks/data/fr/',
-    CHECKPOINT_SAVE_PATH = "/content/checkpoint.ckpt",
+    CHECKPOINT_SAVE_PATH = "/home/ola/store/checkpoint.ckpt",
 
     CHARS =["^", "a", "b", "c" , "d" ,"e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", 
             "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "'", " "], #replace with  your alphabet
