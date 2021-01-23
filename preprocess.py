@@ -25,7 +25,7 @@ except:
     from .utils import args_ctc
     
 import progressbar
-from ctcdecode import CTCBeamDecoder
+# from ctcdecode import CTCBeamDecoder
 
 import multiprocessing
 import pandas as pd
