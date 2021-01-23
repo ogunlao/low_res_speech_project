@@ -29,6 +29,7 @@ from ctcdecode import CTCBeamDecoder
 
 import multiprocessing
 import pandas as pd
+import json
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -65,7 +66,38 @@ def dl_commonvoice_data(url, save_path=None, unpack=True):
         extract_archive(filename, outdir=save_path)
         print(f"file sucessfully unpacked in dir {save_path}")
 
+# Function to build a manifest
+def build_manifest(df, manifest_path, data_dir, max_sec=None):
+    total = 0.0
+    with open(manifest_path, 'w') as fout:
+        # Lines look like this:
+        for i in range(len(df)):
+            # Get transcripts - phoneme
+            transcript = df.iloc[i].sentence
+            transcript = clean_sentence(transcript)
 
+            # Get audio path
+            wav_path = df.iloc[i].path
+            audio_path = os.path.join(
+                data_dir, wav_path,)
+
+            duration = df.iloc[i].duration
+            total += duration
+
+            if max_sec and total >= max_sec:
+              break
+
+            # Write the metadata to the manifest
+            metadata = {
+                "audio_filepath": audio_path,
+                "duration": duration,
+                "text": transcript.lower()
+            }
+
+            json.dump(metadata, fout)
+            fout.write('\n')
+            
+            
 def convert_to_wav(mp3_file, 
                    src_path, 
                    dest_path='/content/files/',
