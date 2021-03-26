@@ -43,20 +43,37 @@ def get_pseudolabel_n_phonemize(model, df,
     prev_len = len(df)
     df = df[df['pseudolabel'].notna()]
     df = df.reset_index(drop=True)
+    
     if prev_len != len(df):
       print(f"{prev_len - len(df)} pseudolabels dropped cos on na")
-    # TODO: uncomment when converting pseudolabels to phonemes 
-    # transcriptions = df['pseudolabel'].values
-    # phonemes = phonemize(transcriptions, 
-    #                       backend='festival', 
-    #                       separator=separator)
+      
+    # TODO: uncomment when converting pseudolabels to phonemes
+    
+    df_columns = list(df.columns.values)
+    df_array = []
+    for i, data in df.iterrows():
+        transcription = data.pseudolabel
+        phoneme = phonemize(transcription, 
+                            backend='festival', 
+                            separator=separator, njobs=6)
+        if phoneme:
+            data['phoneme'] = phoneme
+            df_array.append(data)
+
+        if i%100 == 0:
+            print('Now at index', i)
+
+    new_df = pd.DataFrame(df_array, columns=df_columns+['phoneme'])
+    
     # assert len(phonemes) == len(transcriptions)
     # df['phoneme'] = phonemes
-    df.to_csv(data_path+os.sep+save_file_name, index=False)
+    # df.to_csv(data_path+os.sep+save_file_name, index=False)
+    
+    new_df.to_csv(data_path+os.sep+save_file_name, index=False)
     # if i%10 == 0:
     #   print('Now at index', i)
     print(f'Code finished in {time.time() - t0} seconds')
-    return df
+    return new_df
 
 def extract_phonemes_n_map(df):
     phoneme_set = set()

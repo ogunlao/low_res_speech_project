@@ -40,7 +40,7 @@ args = Namespace(
     
 
     # dataloader parameters
-    DATA_FOLDER = 'data', 
+    DATA_FOLDER = 'data1', 
     RAW_AUDIO_PATH = 'cv-corpus-6.1-2020-12-11/rw/clips/',
     SAMPLED_DATA_FOLDER = 'clips_16k', 
     DURATION_SAV_FILE = 'clips_duration.txt', 
