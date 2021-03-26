@@ -139,11 +139,11 @@ def create_train_finetune_split(train_duration,
     for split in split_details:
         if not split_details[split][0]: 
             continue
-        duration = split_details[split][0]
+        samples_duration = split_details[split][0]
         path_name = split_details[split][1]
 
         for row in df.itertuples():
-            if total_duration <= train_duration:
+            if total_duration <= samples_duration:
                 total_duration += float(row.duration)
                 last_row_idx = row.Index
             else:
