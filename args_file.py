@@ -45,9 +45,9 @@ args = Namespace(
     SAMPLED_DATA_FOLDER = 'clips_16k', 
     DURATION_SAV_FILE = 'clips_duration.txt', 
 
-    TRAIN_DURATION = 20, # hrs
-    FINETUNE_DURATION = 10, # hrs
-    VALIDATION_DURATION = 10, # hrs
+    TRAIN_DURATION = 100*3600, # hrs
+    FINETUNE_DURATION = 50*3600, # hrs
+    VALIDATION_DURATION = 20*3600, # hrs
 
     MODEL_NAME = 'Jasper10x5Dr-En',
     TRAIN_PS_CSV = 'train_ps.csv',
@@ -55,7 +55,6 @@ args = Namespace(
     FINETUNE_CSV = 'finetune.csv',
     
 
-    
     TRAIN_W_PS_CSV = 'train_w_ps.csv',
     VAL_W_PS_CSV = 'val_w_ps.csv',
 
