@@ -25,38 +25,38 @@ args = Namespace(
     DURATION_SAV_FILE = 'clips_duration.txt', 
     MODEL_NAME = 'Jasper10x5Dr-En',
 
-    # TRAIN_DURATION = 100 * 3600, # hrs
-    # FINETUNE_DURATION = 50 * 3600, # hrs
-    # VALIDATION_DURATION = 20 * 3600, # hrs
-  
-    # TRAIN_PS_CSV = 'train_ps.csv',
-    # VAL_PS_CSV = 'val_ps.csv',
-    # FINETUNE_CSV = 'finetune.csv',
-    
-    # # File paths to pseudolabel experiments
-    # TRAIN_W_PS_CSV = 'train_w_ps.csv',
-    # VAL_W_PS_CSV = 'val_w_ps.csv',
-
-    # #File paths to phonemes
-    # TRAIN_W_Ph_CSV = 'train_w_ph.csv',
-    # VAL_W_Ph_CSV = 'val_w_ph.csv',
-
-    ############################################### 2nd experiments with 250train, 150, 50 finetune, 20hrs val#############################
     TRAIN_DURATION = 100 * 3600, # hrs
     FINETUNE_DURATION = 50 * 3600, # hrs
     VALIDATION_DURATION = 20 * 3600, # hrs
-
+  
     TRAIN_PS_CSV = 'train_ps.csv',
     VAL_PS_CSV = 'val_ps.csv',
     FINETUNE_CSV = 'finetune.csv',
-
+    
     # File paths to pseudolabel experiments
     TRAIN_W_PS_CSV = 'train_w_ps.csv',
     VAL_W_PS_CSV = 'val_w_ps.csv',
 
-    # File paths to phonemes experiments
+    #File paths to phonemes
     TRAIN_W_Ph_CSV = 'train_w_ph.csv',
     VAL_W_Ph_CSV = 'val_w_ph.csv',
+
+    ############################################### 2nd experiments with 250train, 150, 50 finetune, 20hrs val#############################
+    # TRAIN_DURATION = 250 * 3600, # hrs
+    # FINETUNE_DURATION = 150 * 3600, # hrs
+    # VALIDATION_DURATION = 20 * 3600, # hrs
+
+    # TRAIN_PS_CSV = 'train_ps_250hrs.csv',
+    # VAL_PS_CSV = 'val_ps_20hrs_2nd.csv',
+    # FINETUNE_CSV = 'finetune_150hrs.csv',
+
+    # # File paths to pseudolabel experiments
+    # TRAIN_W_PS_CSV = 'train_w_ps_250hrs.csv',
+    # VAL_W_PS_CSV = 'val_w_ps_20hrs.csv',
+
+    # # File paths to phonemes experiments
+    # TRAIN_W_Ph_CSV = 'train_w_ph_250hrs.csv',
+    # VAL_W_Ph_CSV = 'val_w_ph_20hrs_2nd.csv',
 
     # File paths to finetune experiments
     TRAIN_FT_CSV = 'finetune.csv',
