@@ -121,32 +121,32 @@ if __name__ == "__main__":
                         phoneme_sep, 
                         args.get('VAL_W_PS_CSV'), bs=32)
     # TODO uncomment to generate the manifest
-    # phoneme_set, phoneme_map = extract_phonemes_n_map(train_ps)
-    # print('Vocab_Train: ', phoneme_map.values(), 'vocab_len_Train: ', len(list(phoneme_map.values())))
+    phoneme_set, phoneme_map = extract_phonemes_n_map(train_ps)
+    print('Vocab_Train: ', phoneme_map.values(), 'vocab_len_Train: ', len(list(phoneme_map.values())))
 
 
-    #print(f'Total no. of phonemes {len(phoneme_set)}')
+    print(f'Total no. of phonemes {len(phoneme_set)}')
 
     # Building Manifests
     print("******")
 
-    # train_manifest = os.path.join(data_path, 'train_manifest.json')
-    # val_manifest = os.path.join(data_path, 'val_manifest.json')
+    train_manifest = os.path.join(data_path, 'train_manifest.json')
+    val_manifest = os.path.join(data_path, 'val_manifest.json')
 
-    # #if not os.path.isfile(train_manifest):    
-    # build_manifest_ps(train_ps, 
-    #             train_manifest,
-    #             data_sample_dir,
-    #             phoneme_map,)
+    #if not os.path.isfile(train_manifest):    
+    build_manifest_ps(train_ps, 
+                train_manifest,
+                data_sample_dir,
+                phoneme_map,)
 
-    # build_manifest_ps(val_ps, 
-    #             val_manifest,
-    #             data_sample_dir,
-    #             phoneme_map,) 
+    build_manifest_ps(val_ps, 
+                val_manifest,
+                data_sample_dir,
+                phoneme_map,) 
 
-    # print("Training and val manifest created.")
+    print("Training and val manifest created.")
 
-    # print("***Done***")
+    print("***Done***")
 
 
 
