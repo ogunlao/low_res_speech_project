@@ -87,6 +87,7 @@ def download_n_subsample(args):
         
         for process in processes:
             process.join()
+            
         print('Sampling done')
         # # subsample audio files using threads
         # with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -110,6 +111,7 @@ def download_n_subsample(args):
 def create_train_finetune_split(train_duration, 
                                 finetune_duration, 
                                 validation_duration, args):
+
     curr_path = Path(__file__).parent.absolute()
     data_path = str(curr_path)+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
     raw_audio_paths = args.get('RAW_AUDIO_PATH')
@@ -124,43 +126,38 @@ def create_train_finetune_split(train_duration,
     train_df = train_df.sample(frac=1, 
                         random_state=args.get('SEED', 1234)).reset_index(drop=True)
 
-    start_index = 0
     total_duration = 0.0
+    current_idx = 0
+    
+    split_details = {'train': [train_duration, args.get('TRAIN_PS_CSV')],
+                     'finetune': [finetune_duration, args.get('FINETUNE_CSV')],
+                     'val': [validation_duration, args.get('VAL_PS_CSV')]
+                     }
+    
+    df = train_df.copy(deep=True)
+    last_row_idx = 0
+    for split in split_details:
+        if not split_details[split][0]: 
+            continue
+        duration = split_details[split][0]
+        path_name = split_details[split][1]
 
-    train = None
-    for i in range(start_index, len(train_df)):
-        if total_duration <= train_duration:
-            total_duration += float(train_df.iloc[i].duration)
-        else:
-            train = train_df[start_index:i].copy()
-            train.to_csv(data_path+os.sep+args.get('TRAIN_PS_CSV'), index=False)
-            print(f'{total_duration/3600}hrs training split done')
-            start_index = i
-            total_duration = 0
-            break
-
-    for i in range(start_index, len(train_df)):
-        if total_duration <= finetune_duration:
-            total_duration += float(train_df.iloc[i].duration)
-        else:
-            train = train_df[start_index:i].copy()
-            train.to_csv(data_path+os.sep+args.get('FINETUNE_CSV'), index=False)
-            print(f'{total_duration/3600}hrs finetune split done')
-            start_index = i
-            total_duration = 0
-            break
-
-
-    if validation_duration: # validation set for pseudolabel pretraining
-        for i in range(start_index, len(train_df)):
-            if total_duration <= validation_duration:
-                total_duration += float(train_df.iloc[i].duration)
+        for row in df.itertuples():
+            if total_duration <= train_duration:
+                total_duration += float(row.duration)
+                last_row_idx = row.Index
             else:
-                train = train_df[start_index:i].copy()
-                train.to_csv(data_path+os.sep+args.get('VAL_PS_CSV'), index=False)
-                print(f'{total_duration/3600}hrs validation split done')
-                start_index = i
                 break
+            
+        temp_df = df[0:last_row_idx].copy()
+        temp_df.to_csv(data_path + os.sep + path_name, index=False)
+        print(f'{total_duration/3600}hrs {split} split done')
+        
+        # reset
+        df = df[last_row_idx:].reset_index(drop=True).copy()
+        last_row_idx = 0
+        total_duration = 0
+        temp_df = None
                 
  
 if __name__ == '__main__':
