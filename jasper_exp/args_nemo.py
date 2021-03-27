@@ -67,9 +67,9 @@ args = Namespace(
     CONFIG_PATH_FT = 'configs/jasper_10x5dr_ft.yaml',
 
     SAV_CHECKPOINT_PATH = 'models',
-    NUMB_GPU = 1, # Default number of gpus
-    MAX_EPOCHS = 3,
-    PATIENCE = 100,
+    NUMB_GPU = 4, # Default number of gpus
+    MAX_EPOCHS = 300,
+    PATIENCE = 20,
 
     FREEZE_FEATURE_EXTRACTOR = False,
 )

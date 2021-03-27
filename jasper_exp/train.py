@@ -47,7 +47,7 @@ def train(params, args):
         period=1)
 
     trainer = pl.Trainer(gpus=args.get('NUMB_GPU'),
-                        num_nodes=args.get('NUMB_GPU'), 
+                        num_nodes=1, 
                         distributed_backend='ddp',
                         max_epochs=args.get('MAX_EPOCHS'),
                         early_stop_callback=early_stop_callback,
