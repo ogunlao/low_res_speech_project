@@ -87,7 +87,12 @@ def train(params, args):
                 )
 
     asr_model.summarize()
-    trainer.fit(asr_model)
+    
+    try:
+        trainer.fit(asr_model)
+    
+    except KeyboardInterrupt:
+        return asr_model
 
     asr_model.save_to(os.path.join(model_path, 'asr_model_jasper_ph.nemo'))
     return asr_model
@@ -114,14 +119,15 @@ if __name__ == "__main__":
     
     try:
         asr_model = train(params, args)
-
+    
+    finally:
         #Evaluate on the training
         eval_model(asr_model, params, args, 
                     valid=False, train=True)
 
         #Evaluate on the validation
         eval_model(asr_model, params, args)
-    finally:
+        
         # clear cache
         del asr_model
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
