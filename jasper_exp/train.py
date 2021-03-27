@@ -46,12 +46,18 @@ def train(params, args):
         save_weights_only=False,
         period=1)
 
-    trainer = pl.Trainer(gpus=args.get('NUMB_GPU'),
-                        num_nodes=1, 
-                        distributed_backend='ddp',
-                        max_epochs=args.get('MAX_EPOCHS'),
-                        early_stop_callback=early_stop_callback,
-                        checkpoint_callback=checkpoint_callback)
+    trainer = pl.Trainer(
+            max_epochs=args.get('MAX_EPOCHS'),
+            resume_from_checkpoint=os.path.join(model_path, 'jasper_ph_rw__epoch_=28.ckpt'),
+            early_stop_callback=early_stop_callback,
+            checkpoint_callback=checkpoint_callback)
+    
+    # trainer = pl.Trainer(gpus=args.get('NUMB_GPU'),
+    #                     num_nodes=1, 
+    #                     distributed_backend='ddp',
+    #                     max_epochs=args.get('MAX_EPOCHS'),
+    #                     early_stop_callback=early_stop_callback,
+    #                     checkpoint_callback=checkpoint_callback)
 
     train_manifest = os.path.join(data_path, 'train_manifest.json')
     val_manifest = os.path.join(data_path, 'val_manifest.json')
