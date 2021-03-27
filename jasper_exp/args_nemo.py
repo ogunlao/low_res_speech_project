@@ -72,7 +72,6 @@ args = Namespace(
     PATIENCE = 100,
 
     FREEZE_FEATURE_EXTRACTOR = False,
-
 )
 # args_ctc.DEVICE = True if torch.cuda.is_available() else False
 # args_ctc.CUT_OFF_TOP_N = len(args_ctc.CHARS)
