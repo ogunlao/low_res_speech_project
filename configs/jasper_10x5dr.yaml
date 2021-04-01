@@ -2,7 +2,8 @@ name: &name "Jasper10x5"
 
 model:
   sample_rate: &sample_rate 16000
-  labels: &labels ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', ' ']
+  labels: &labels ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
+          'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', ' ']
   train_ds:
     manifest_filepath: ???
     sample_rate: 16000
@@ -14,6 +15,7 @@ model:
     is_tarred: False
     tarred_audio_filepaths: null
     tarred_shard_strategy: "scatter"
+
 
   validation_ds:
     manifest_filepath: ???
@@ -152,7 +154,7 @@ model:
   decoder:
     _target_: nemo.collections.asr.modules.ConvASRDecoder
     feat_in: 1024
-    num_classes: 33
+    num_classes: 41
     vocabulary: *labels
 
   optim:

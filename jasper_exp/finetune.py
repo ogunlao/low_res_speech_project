@@ -164,11 +164,6 @@ def finetune(params, args, manifest_dict):
             print('---------------------------------------------------------')
             return
 
-        asr_model.change_vocabulary(
-               new_vocabulary=
-                params['model']['labels']
-               )
-
         new_opt = copy.deepcopy(params['model']['optim'])
         cfg = copy.deepcopy(asr_model.cfg)
 
@@ -181,6 +176,11 @@ def finetune(params, args, manifest_dict):
         asr_model.set_trainer(trainer)
         asr_model.setup_training_data(train_data_config=params['model']['train_ds'])
         asr_model.setup_validation_data(val_data_config=params['model']['validation_ds'])
+        
+        asr_model.change_vocabulary(
+               new_vocabulary=
+                params['model']['labels']
+               )
 
         if args.get('FREEZE_FEATURE_EXTRACTOR'):
             print('Acoustic Encoder is been used as a feature extractor only')
@@ -222,6 +222,7 @@ if __name__ == '__main__':
     with open(config_path) as f:
         params = yaml.load(f)
 
+    print(params['model']['labels'])
     try:
         asr_model = finetune(params, args, manifest_dict)
 
