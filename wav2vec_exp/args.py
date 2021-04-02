@@ -13,8 +13,12 @@ args = Namespace(
     VAL_PS_CSV = 'val_ps.csv',
     
     FINETUNE_CSV = 'finetune.csv',
-    VAL_CSV = 'validated.csv',
-    TEST_CSV = 'test.csv',
+    VAL_CSV = 'valid_resampled.csv',
+    TEST_CSV = 'test_resampled.csv',
+    
+    FINETUNE_TSV = 'finetune.tsv',
+    VAL_TSV = 'validated.tsv',
+    TEST_TSV = 'test.tsv',
     
     RAW_AUDIO_PATH = 'cv-corpus-6.1-2020-12-11/rw/clips/',
     DURATION_SAV_FILE = 'clips_duration.txt', 

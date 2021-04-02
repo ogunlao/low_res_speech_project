@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import pandas as pd
+from collections import defaultdict
 
 from unicodedata import normalize
 import string
@@ -41,9 +42,29 @@ def create_label_file(df, dest_path):
             print(sentence, file=f)
     print(f'Finished writing to {dest_path}')
 
+def generate_char_dict(df):
+    char_dict = defaultdict(int)
+
+    for sentence in df['sentence'].values:
+        if sentence:
+            sentence = clean_sentence(sentence)
+            for char in sentence:
+                char_dict[char]+=1
+
+    print(char_dict)
+    print(len(char_dict))
+    
+    return char_dict
+
+def save_char_dict(char_dict):
+    with open(os.path.join(download_path, 'dict.ltr.txt'), 'w') as f:
+        for char, total in char_dict.items():
+            if char == ' ': char = '|'
+            print(f'{char} {total}', file=f)
+    
+
     
 if __name__ == '__main__':
-    
     args = vars(args)
 
     curr_path = Path(__file__).parent.absolute()
@@ -58,11 +79,14 @@ if __name__ == '__main__':
     
     test_path = os.path.join(download_path, args.get('TEST_CSV'))
     test_df = pd.read_csv(val_path)
-
-    train_dest_path = os.path.join(download_path, args.get('TRAIN_PS_CSV'))
-    val_dest_path = os.path.join(download_path, args.get('VAL_PS_CSV'))
     
-   
+    # train_df.to_csv(os.path.join(download_path, args.get('FINETUNE_TSV')), sep='\t')
+    # val_df.to_csv(os.path.join(download_path, args.get('VAL_TSV')), sep='\t')
+    # test_df.to_csv(os.path.join(download_path, args.get('TEST_TSV')), sep='\t')
+
+    char_dict = generate_char_dict(train_df)
+    save_char_dict(char_dict)
+    
     create_label_file(df=train_df, 
                       dest_path=os.path.join(download_path, 'train.ltr'))
 
@@ -78,7 +102,7 @@ if __name__ == '__main__':
 # !fairseq-hydra-train \
 #     task.data=~/data/clips_16k/ \
 #     distributed_training.distributed_world_size=1 \
-#     optimization.update_freq='[64]' \
-#     model.w2v_path='~/model/wav2vec_small.pt' \
+#     optimization.update_freq='[128]' \
+#     model.w2v_path='~/model/wav2vec_large.pt' \
 #     --config-dir ~/fairseq/examples/wav2vec/config/finetuning \
 #     --config-name base_100h

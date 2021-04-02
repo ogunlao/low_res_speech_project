@@ -2,7 +2,7 @@ import soundfile
 from pathlib import Path
 import os
 import pandas as pd
-from .args import args
+from args import args
 
 
 args = vars(args)
@@ -43,6 +43,13 @@ if __name__ == '__main__':
     create_tsv(df=val_df, 
                 dir_path=sample_dest_path,
                 dest_path=val_dest_path)
+
+# change to true
+# fairseq/fairseq/scoring/wer.py /
+
+# wer_char_level: bool = field(
+#         default=False, metadata={"help": "evaluate at character level"}
+#     )
 
 ## Run script in cmd
   
