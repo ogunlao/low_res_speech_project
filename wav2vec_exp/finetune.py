@@ -2,10 +2,12 @@ from pathlib import Path
 import os
 import pandas as pd
 from collections import defaultdict
+import soundfile
 
 from unicodedata import normalize
 import string
 import re
+from args import args
 
 # function to clean tet, remove punctuations and normalize text
 def clean_sentence(sentence):
@@ -32,13 +34,17 @@ def clean_sentence(sentence):
 
     return ' '.join(sentence)
 
+def separate_char(sentence):
+    sentence = list(sentence)
+    sentence = ' '.join(sentence)
+    return sentence
 
 def create_label_file(df, dest_path):
     with open(dest_path, 'w') as f:
         for i, data in df.iterrows():
             sentence = clean_sentence(data.sentence)
             sentence = sentence.replace(' ', '|')
-
+            sentence = separate_char(sentence)
             print(sentence, file=f)
     print(f'Finished writing to {dest_path}')
 
@@ -58,17 +64,30 @@ def generate_char_dict(df):
 
 def save_char_dict(char_dict):
     with open(os.path.join(download_path, 'dict.ltr.txt'), 'w') as f:
-        for char, total in char_dict.items():
+        char_tuple = sorted(char_dict.items())
+        for char, total in char_tuple:
             if char == ' ': char = '|'
             print(f'{char} {total}', file=f)
     
 
+def create_tsv(df, dir_path, dest_path):
+    with open(dest_path, 'w') as f:
+        print(dir_path, file=f)
+        
+        for i, data in df.iterrows():
+            file_path = data.path
+            frames = soundfile.info(os.path.join(dir_path, file_path)).frames
+            print(
+                "{}\t{}".format(file_path, frames), file=f
+            )
+    print(f'Finished writing to {dest_path}')   
+    
     
 if __name__ == '__main__':
     args = vars(args)
 
     curr_path = Path(__file__).parent.absolute()
-    download_path = str(curr_path)+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
+    download_path = str(curr_path)+os.sep+'..'+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
     sample_dest_path = download_path+os.sep+args.get('SAMPLED_DATA_FOLDER')
     
     train_path = os.path.join(download_path, args.get('FINETUNE_CSV'))
@@ -91,18 +110,47 @@ if __name__ == '__main__':
                       dest_path=os.path.join(download_path, 'train.ltr'))
 
     create_label_file(df=val_df, 
-                      dest_path=os.path.join(download_path, 'valid.ltr'))
+                      dest_path=os.path.join(download_path, 'dev_other.ltr'))
 
     create_label_file(df=test_df, 
-                      dest_path=os.path.join(download_path, 'test.ltr'))
+                      dest_path=os.path.join(download_path, 'valid.ltr'))
     
+   
+    train_path = os.path.join(download_path, args.get('FINETUNE_CSV'))
+    train = pd.read_csv(train_path)
+
+    val_path = os.path.join(download_path, args.get('VAL_CSV'))
+    val = pd.read_csv(val_path)
+
+    test_path = os.path.join(download_path, args.get('TEST_CSV'))
+    test = pd.read_csv(test_path)
+
+    train_dest_path = os.path.join(download_path, args.get('FINETUNE_TSV'))
+    val_dest_path = os.path.join(download_path, args.get('VAL_TSV'))
+    test_dest_path = os.path.join(download_path, args.get('TEST_TSV'))
+
+             
+    create_tsv(df=train, 
+                dir_path=sample_dest_path,
+                dest_path=train_dest_path)
+
+    create_tsv(df=val, 
+                dir_path=sample_dest_path,
+                dest_path=val_dest_path)
+
+    create_tsv(df=test, 
+                dir_path=sample_dest_path,
+                dest_path=test_dest_path)
     
 ## Run this to finetune
 
-# !fairseq-hydra-train \
-#     task.data=~/data/clips_16k/ \
+# fairseq-hydra-train \
+#     task.data=/content/weak_supervision/data/ \
 #     distributed_training.distributed_world_size=1 \
 #     optimization.update_freq='[128]' \
-#     model.w2v_path='~/model/wav2vec_large.pt' \
-#     --config-dir ~/fairseq/examples/wav2vec/config/finetuning \
-#     --config-name base_100h
+#     optimization.max_epoch=2 \
+#     model.w2v_path=/content/weak_supervision/models/checkpoint_best.pt \
+#     task.normalize=True \
+#     checkpoint.best_checkpoint_metric="loss" \
+#     --config-dir /content/weak_supervision/low_res_speech_project/wav2vec_exp/fairseq/examples/wav2vec/config/finetuning \
+#     --config-name base_100h 

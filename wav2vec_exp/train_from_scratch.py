@@ -28,11 +28,11 @@ def create_tsv(df, dir_path, dest_path):
 train_path = os.path.join(download_path, args.get('TRAIN_PS_CSV'))
 train_df = pd.read_csv(train_path)
 
-val_path = os.path.join(download_path, args.get('TRAIN_PS_CSV'))
+val_path = os.path.join(download_path, args.get('VAL_PS_CSV'))
 val_df = pd.read_csv(val_path)
 
-train_dest_path = os.path.join(download_path, args.get('TRAIN_PS_CSV'))
-val_dest_path = os.path.join(download_path, args.get('VAL_PS_CSV'))
+train_dest_path = os.path.join(download_path, args.get('TRAIN_PS_TSV'))
+val_dest_path = os.path.join(download_path, args.get('VAL_PS_TSV'))
 
 
 if __name__ == '__main__':                 
