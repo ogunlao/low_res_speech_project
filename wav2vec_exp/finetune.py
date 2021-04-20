@@ -92,6 +92,8 @@ if __name__ == '__main__':
     
     train_path = os.path.join(download_path, args.get('FINETUNE_CSV'))
     train_df = pd.read_csv(train_path)
+    train_df = train_df[train_df['sentence'].notna()] # some sentences may be blank
+    train_df = train_df.reset_index(drop=True)
 
     val_path = os.path.join(download_path, args.get('VAL_CSV'))
     val_df = pd.read_csv(val_path)
@@ -115,30 +117,21 @@ if __name__ == '__main__':
     create_label_file(df=test_df, 
                       dest_path=os.path.join(download_path, 'valid.ltr'))
     
-   
-    train_path = os.path.join(download_path, args.get('FINETUNE_CSV'))
-    train = pd.read_csv(train_path)
-
-    val_path = os.path.join(download_path, args.get('VAL_CSV'))
-    val = pd.read_csv(val_path)
-
-    test_path = os.path.join(download_path, args.get('TEST_CSV'))
-    test = pd.read_csv(test_path)
 
     train_dest_path = os.path.join(download_path, args.get('FINETUNE_TSV'))
     val_dest_path = os.path.join(download_path, args.get('VAL_TSV'))
     test_dest_path = os.path.join(download_path, args.get('TEST_TSV'))
 
              
-    create_tsv(df=train, 
+    create_tsv(df=train_df, 
                 dir_path=sample_dest_path,
                 dest_path=train_dest_path)
 
-    create_tsv(df=val, 
+    create_tsv(df=val_df, 
                 dir_path=sample_dest_path,
                 dest_path=val_dest_path)
 
-    create_tsv(df=test, 
+    create_tsv(df=test_df, 
                 dir_path=sample_dest_path,
                 dest_path=test_dest_path)
     
