@@ -3,7 +3,7 @@ import nemo
 import nemo.collections.asr as nemo_asr
 
 from ruamel.yaml import YAML
-from args_nemo import args as args_default
+from configs.args_nemo_train import args as args_default
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
 import argparse
@@ -16,8 +16,7 @@ import copy
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping
-
-from eval_model import eval_model
+from helpers.change_vocab import change_vocabulary2
 
 def collate_args(args1, args2):
     args = {**args2, **args1}
@@ -36,40 +35,44 @@ def train(params, args):
     config_path = str(curr_path)+os.sep+'..'+os.sep+'..'+os.sep+args.get('CONFIG_PATH')
 
     early_stop_callback = EarlyStopping(
-        patience=args.get('PATIENCE'),
-    )
+                            monitor=args.get("MONITOR"),
+                            patience=args.get('PATIENCE'),
+                            mode='min'
+                            )
 
+    tag = args.get("EXPERIMENT_TAG", "01")
+    language = args.get("LANGUAGE", "unk")
     checkpoint_callback = ModelCheckpointAtEpochEnd(
-        model_path+os.sep+'jasper_ph_rw_'+'_{epoch:02d}',
+        model_path+os.sep+'jasper_ph_'+language+str(tag)+'_{epoch:02d}',
+        monitor=args.get("MONITOR"),
         verbose=True,
         save_top_k=1,
         save_weights_only=False,
         period=1)
 
-    trainer = pl.Trainer(
-            max_epochs=args.get('MAX_EPOCHS'),
-            resume_from_checkpoint=os.path.join(model_path, 'jasper_ph_rw__epoch_=28.ckpt'),
-            early_stop_callback=early_stop_callback,
-            checkpoint_callback=checkpoint_callback)
+    trainer = pl.Trainer(gpus=(args.get('NUMB_GPU')),
+                        num_nodes=1,
+                        distributed_backend = args.get('DISTRIBUTED_BACKEND'), 
+                        max_epochs=args.get('MAX_EPOCHS'),
+                        default_root_dir=model_path,
+                        checkpoint_callback=checkpoint_callback,
+                        early_stop_callback=early_stop_callback,
+                        resume_from_checkpoint=args.get("RESUME_CHECKPOINT_NAME", None))
     
-    # trainer = pl.Trainer(gpus=args.get('NUMB_GPU'),
-    #                     num_nodes=1, 
-    #                     distributed_backend='ddp',
-    #                     max_epochs=args.get('MAX_EPOCHS'),
-    #                     early_stop_callback=early_stop_callback,
-    #                     checkpoint_callback=checkpoint_callback)
-
-    train_manifest = os.path.join(data_path, 'train_manifest.json')
-    val_manifest = os.path.join(data_path, 'val_manifest.json')
+    if args.get("RESUME_CHECKPOINT_NAME"):
+        chkpt = args.get("RESUME_CHECKPOINT_NAME")
+        print(f"Will resuming from checkpoint {chkpt}")
+        
+    train_manifest = os.path.join(data_path, args.get("TRAIN_MANIFEST"))
+    val_manifest = os.path.join(data_path, args.get("VAL_MANIFEST"))
 
     params['model']['train_ds']['manifest_filepath'] = train_manifest
     params['model']['validation_ds']['manifest_filepath'] = val_manifest
 
     if args.get('USE_PRETRAINED') is False:
+        print("Random model will be initialized for training")
         asr_model = nemo_asr.models.EncDecCTCModel(cfg=DictConfig(params['model']), 
                                                 trainer=trainer)
-
-        
     else:
         print(f"Using pretrained model {args.get('MODEL_NAME')} for training")
         print('--------------------------------------------------------------')
@@ -88,20 +91,27 @@ def train(params, args):
         asr_model.set_trainer(trainer)
         asr_model.setup_training_data(train_data_config=params['model']['train_ds'])
         asr_model.setup_validation_data(val_data_config=params['model']['validation_ds'])
-        asr_model.change_vocabulary(
-                new_vocabulary=params['model']['labels']
-                )
+    
+    # setting this to enable use_cer = True
+    asr_model.change_vocabulary = change_vocabulary2
+    asr_model.change_vocabulary(asr_model,
+            new_vocabulary=params['model']['labels']
+            )
 
     asr_model.summarize()
     
-    try:
-        trainer.fit(asr_model)
+    trainer.fit(asr_model)
     
-    except KeyboardInterrupt:
-        return asr_model
-
-    asr_model.save_to(os.path.join(model_path, 'asr_model_jasper_ph.nemo'))
-    return asr_model
+    print(f'Best checkpoint during training is {checkpoint_callback.best_model_path}')
+    
+    final_save_filename = os.path.join(model_path, 'jasper_ph_'+str(language)+str(tag)+"_last.ckpt")
+    trainer.save_checkpoint(final_save_filename)
+    
+    # clear cache
+    if 'asr_model' in locals(): 
+        del asr_model
+    
+    torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -123,17 +133,6 @@ if __name__ == "__main__":
     with open(config_path) as f:
         params = yaml.load(f)
     
-    try:
-        asr_model = train(params, args)
+    train(params, args)
     
-    finally:
-        #Evaluate on the training
-        eval_model(asr_model, params, args, 
-                    valid=False, train=True)
-
-        #Evaluate on the validation
-        eval_model(asr_model, params, args)
-        
-        # clear cache
-        del asr_model
-        torch.cuda.empty_cache()
+    print('Model training completed')

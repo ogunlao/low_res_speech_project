@@ -7,8 +7,8 @@ def eval_model(asr_model, params, args, manifest_file='',
 
     # Bigger batch-size = bigger throughput
     params['model']['validation_ds']['batch_size'] = int(args.get('EVALUATION_BS'))
-    curr_path = curr_path = Path(__file__).parent.absolute()
-    data_path = str(curr_path)+os.sep+'..'+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
+    curr_path = args['curr_path']
+    data_path = args['data_path']
 
     if valid:
         print('Evaluation on the validation...')
@@ -17,14 +17,13 @@ def eval_model(asr_model, params, args, manifest_file='',
     elif test:
         print('Evaluation on the test...')
         test_manifest = os.path.join(data_path, manifest_file)
-        params['model']['validation_ds']['manifest_filepath'] = test_manifest
-        asr_model.setup_test_data(test_data_config=params['model']['validation_ds'])
+        test_data_config = params['model']['validation_ds']
+        test_data_config['manifest_filepath'] = test_manifest
+        asr_model.setup_test_data(test_data_config=test_data_config)
 
     elif train:
         print('Evaluation on the train...')
-        train_manifest = params['model']['train_ds']['manifest_filepath']
-        params['model']['validation_ds']['manifest_filepath'] = train_manifest
-        asr_model.setup_test_data(test_data_config=params['model']['validation_ds'])
+        asr_model.setup_test_data(test_data_config=params['model']['train_ds'])
 
     asr_model.cuda()
     asr_model.eval()
@@ -54,12 +53,15 @@ def eval_model(asr_model, params, args, manifest_file='',
         cer_nums.append(cer_num.detach().cpu().numpy())
         cer_denoms.append(cer_denom.detach().cpu().numpy())
 
+    cer = sum(cer_nums)/sum(cer_denoms)
     if valid:
-        print(f"Val PER = {sum(cer_nums)/sum(cer_denoms)}")
+        print(f"Val PER = {cer}")
     elif train:
-        print(f"Train PER = {sum(cer_nums)/sum(cer_denoms)}")
+        print(f"Train PER = {cer}")
     else:
-        print(f"Test PER = {sum(cer_nums)/sum(cer_denoms)}")
+        print(f"Test PER = {cer}")
 
     print('Evaluation completed')
     print('---------------------------------------------')
+    
+    return cer

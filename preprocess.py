@@ -1,4 +1,3 @@
-import wget
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -6,158 +5,23 @@ import time
 import glob
 import os
 
-from patoolib import extract_archive
-from pydub import AudioSegment as am
-#import concurrent.futures
-import threading
-
-#import progressbar
-
-from args_file import args as args_default
+from configs import args_prep as args_default
 from utils import make_dirs
 from utils import collate_args
+from utils import dl_commonvoice_data
 
+from utils import sample_audio
 
-def dl_commonvoice_data(download_path, args, unpack=True):
-    r"""
-    Download common voice file from mozilla commonvoice repo
-
-    usage
-    -----
-    >> url = "https://mozilla-common-voice-datasets.s3.dualstack.us-west-2.amazonaws.com/cv-corpus-6.1-2020-12-11/pa-IN.tar.gz"
-    >> dl_commonvoice_data(download_path, args, unpack=True)
-    """
-    if not os.path.exists(download_path+os.sep+args.get('RAW_AUDIO_PATH')):
-        file_name = download_path+os.sep+'rw.tar.gz'
-        if not os.path.isfile(file_name):
-            filename = wget.download(args.get('url'), download_path)
-            print(f"File sucessfully downloaded in dir {download_path}")
-
-        if unpack:
-            extract_archive(file_name, outdir=download_path, verbose=0)
-            print(f"file sucessfully unpacked in dir {download_path}")
-    else:
-        print('File already exists in dir {download_path}')
-
-def get_audio_samples(audio_file, src_path, 
-                   dest_path,
-                   dest_frame_rate=16000):
-  
-
-    wav_file = str(Path(audio_file).stem) + ".wav"
-    dest_path = os.path.join(dest_path, wav_file)  
-    # convert mp3 to wav
-    try:                                                          
-        sound = am.from_mp3(audio_file)
-        sound = sound.set_frame_rate(dest_frame_rate)      
-        sound.export(dest_path, format="wav")
-    except Exception:
-        print(f'File {audio_file} unable to be processed')
-
-def download_n_subsample(args):
-    """Download audio files, and resamples to required sampling rate
-
-    Args:
-        args (dict): Contains the arguments required for parsing directories
-    """
-    curr_path = Path(__file__).parent.absolute()
-    download_path = str(curr_path)+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
-    make_dirs(download_path)
-
-    if args.get('url'):
-        dl_commonvoice_data(download_path, args)
-
-    raw_audio_paths = args.get('RAW_AUDIO_PATH')
-    audio_files = glob.glob(download_path + os.sep + str(raw_audio_paths) + os.sep + "*.mp3")
+def combine_duration_files(args):
     
-    sample_source_path = download_path + os.sep + str(raw_audio_paths)
-    sample_dest_path = download_path+os.sep+args.get('SAMPLED_DATA_FOLDER')
-    make_dirs(sample_dest_path)
+    save_duration_path = args.get('DURATION_SAV_FILE', '') 
+    all_filenames = glob.glob(download_path+os.sep+save_duration_path+"*.csv")
 
-    if len(os.listdir(sample_dest_path)) == 0: # Check if empty..
-        processes = []
-        
-        for audio_file in audio_files:
-            p = threading.Thread(target=get_audio_samples,
-                                    args=(audio_file,
-                                          sample_source_path,
-                                            sample_dest_path, 16000,))
-            processes.append(p)
-            p.start()
-        
-        for process in processes:
-            process.join()
-            
-        print('Sampling done')
-        # # subsample audio files using threads
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     all_futures = [executor.submit(get_audio_samples, 
-        #                                 audio_file, sample_source_path,
-        #                                     sample_dest_path, 16000) for audio_file in audio_files]
-
-        # results = [f.result() for f in all_futures]
-
-        # # save audio path and duration in file
-        # if not os.path.exists(
-        #     os.path.join(download_path, args.get('DURATION_SAV_FILE'))
-        #     ):
-        #     print(f"Writing duration info to file {args.get('DURATION_SAV_FILE')}")
-
-        #     with open(os.path.join(download_path, args.get('DURATION_SAV_FILE')), "w+") as f:
-        #         for path, duration in results:
-        #             f.write(f"{path} {duration}")
-        #             f.write("\n")
-
-def create_train_finetune_split(train_duration, 
-                                finetune_duration, 
-                                validation_duration, args):
-
-    curr_path = Path(__file__).parent.absolute()
-    data_path = str(curr_path)+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
-    raw_audio_paths = args.get('RAW_AUDIO_PATH')
-
-    train_df = pd.read_csv(
-        os.path.join(data_path, 'train_resampled.csv'))
- 
-
-    columns_to_select = ['path', 'sentence', 'gender', 'duration']
-    train_df = train_df[columns_to_select]
-
-    train_df = train_df.sample(frac=1, 
-                        random_state=args.get('SEED', 1234)).reset_index(drop=True)
-
-    total_duration = 0.0
-    current_idx = 0
-    
-    split_details = {'train': [train_duration, args.get('TRAIN_PS_CSV')],
-                     'finetune': [finetune_duration, args.get('FINETUNE_CSV')],
-                     'val': [validation_duration, args.get('VAL_PS_CSV')]
-                     }
-    
-    df = train_df.copy(deep=True)
-    last_row_idx = 0
-    for split in split_details:
-        if not split_details[split][0]: 
-            continue
-        samples_duration = split_details[split][0]
-        path_name = split_details[split][1]
-
-        for row in df.itertuples():
-            if total_duration <= samples_duration:
-                total_duration += float(row.duration)
-                last_row_idx = row.Index
-            else:
-                break
-            
-        temp_df = df[0:last_row_idx].copy()
-        temp_df.to_csv(data_path + os.sep + path_name, index=False)
-        print(f'{total_duration/3600}hrs {split} split done')
-        
-        # reset
-        df = df[last_row_idx:].reset_index(drop=True).copy()
-        last_row_idx = 0
-        total_duration = 0
-        temp_df = None
+    #combine all files in the list
+    combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames])
+    #export to csv
+    combined_csv.to_csv(download_path+os.sep+save_duration_path, index=False, encoding='utf-8-sig')
+    print(f"Duration csv combined and saved in {download_path} as {save_duration_path}")
                 
  
 if __name__ == '__main__':
@@ -172,11 +36,21 @@ if __name__ == '__main__':
 
     starttime = time.time()
     
-    #download_n_subsample(args)
-    create_train_finetune_split(args.get('TRAIN_DURATION', 50),
-                                args.get('FINETUNE_DURATION', 20),
-                                args.get('VALIDATION_DURATION'), 
-                                args,
-                                )
+    curr_path = Path(__file__).parent.absolute()
+    download_path = str(curr_path)+os.sep+'..'+os.sep+args.get('DATA_FOLDER')
+    make_dirs(download_path)
+
+    # 1) Download files from commonvoice if they do not exis
+    if args.get('url'):
+        dl_commonvoice_data(download_path, args)
+    
+    # 2) Downsample files in folder to 16k sampling rate and save duration of each file
+    try:
+        sample_audio(args)
+    except:
+        print("Audio files are not found for sampling")
+    
+    # 3) Make single duration file. This 
+    combine_duration_files(args)
 
     print('That took {} seconds'.format(time.time() - starttime))

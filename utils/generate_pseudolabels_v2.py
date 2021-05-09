@@ -37,8 +37,8 @@ def get_pseudolabels(model, df,
     print("finished pseudolabelling")
 
     df.to_csv(data_path+os.sep+save_file_name, index=False)
-    # if i%10 == 0:
-    #   print('Now at index', i)
+    if i%10 == 0:
+      print('Now at index', i)
     print(f'Code finished in {time.time() - t0} seconds')
     return df
 

@@ -31,7 +31,14 @@ def generate_phonemes_n_manifest(df,
       print(f"{prev_len - len(df)} pseudolabels dropped cos on na")
 
     # transcriptions = df['pseudolabel'].values
-    
+    ## perform multiprocessing
+    import multiprocessing
+
+    total_len = len(df)
+    split = len(df)//5
+    for i in range(5):
+
+
     df_array = []
     for i, data in df.iterrows():
         transcription = data.pseudolabel
@@ -97,6 +104,8 @@ if __name__ == "__main__":
 
     if args.get('VAL_W_PS_CSV'):
         val_ps = pd.read_csv(os.path.join(data_path, args.get('VAL_W_PS_CSV')))
+        columns_to_select = ['path', 'sentence', 'gender', 'duration']
+        val_ps = val_ps[columns_to_select]
         val_ps = generate_phonemes_n_manifest(val_ps, 
                         data_sample_dir,
                         phoneme_sep, 
@@ -111,8 +120,8 @@ if __name__ == "__main__":
     # Building Manifests
     print("******")
 
-    train_manifest = os.path.join(data_path, 'train_manifest_250hrs.json')
-    val_manifest = os.path.join(data_path, 'val_manifest_20hrs_2nd.json')
+    train_manifest = os.path.join(data_path, 'train_manifest_kb.json')
+    val_manifest = os.path.join(data_path, 'val_manifest_kb.json')
 
 
     build_manifest_ps(train_ps, 

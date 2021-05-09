@@ -1,12 +1,13 @@
+"""Separate script to get duration of files in a folder"""
+
 import wave
 import contextlib
 import time
 import glob
 from pathlib import Path
-from args_file import args
+from configs import args_prep as args
 import os
 from utils import collate_args
-
 
 
 args = collate_args(args1=vars(args), 
