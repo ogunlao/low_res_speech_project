@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 *.tar.gz
 *.tmp
+fairseq/
+*.zip
